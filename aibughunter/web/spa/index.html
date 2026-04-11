@@ -147,9 +147,17 @@
     
     <script>
         const API_BASE = window.location.origin;
-        let state = { token: localStorage.getItem('token'), user: JSON.parse(localStorage.getItem('user') || 'null'), currentRoute: isAuthenticated() ? 'dashboard' : 'landing', scans: [], plans: [] };
         
-        function isAuthenticated() { return !!state.token; }
+        function isAuthenticated() { return !!localStorage.getItem('token'); }
+        
+        let state = { 
+            token: localStorage.getItem('token'), 
+            user: JSON.parse(localStorage.getItem('user') || 'null'), 
+            currentRoute: isAuthenticated() ? 'dashboard' : 'landing', 
+            scans: [], 
+            plans: [] 
+        };
+        
         function showLoading(show) { document.getElementById('loadingOverlay').classList.toggle('active', show); }
         function showAlert(msg, type='info') { const a = document.createElement('div'); a.className = `alert alert-${type}`; a.textContent = msg; document.body.appendChild(a); setTimeout(() => a.remove(), 5000); }
         function navigate(route) { state.currentRoute = route; render(); }
