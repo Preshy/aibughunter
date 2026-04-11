@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Bug Hunter Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 { font-size: 1.8rem; }
+        .header h1 span { color: #fbbf24; }
+        
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .auto-refresh:hover { background: rgba(255,255,255,0.2); }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card.total { border-left-color: #60a5fa; }
+        .stat-card.critical { border-left-color: #ef4444; }
+        .stat-card.high { border-left-color: #f97316; }
+        .stat-card.medium { border-left-color: #eab308; }
+        .stat-card.low { border-left-color: #22c55e; }
+        
+        .stat-card .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #f1f5f9;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 0.5rem;
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            height: 200px;
+            padding: 1rem 0;
+        }
+        
+        .bar {
+            flex: 1;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            transition: height 0.3s;
+            min-height: 20px;
+        }
+        
+        .bar .count {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .bar .label {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            text-align: center;
+        }
+        
+        .scan-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .scan-item {
+            background: #0f172a;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .scan-item .target { font-weight: 600; }
+        .scan-item .meta { font-size: 0.8rem; color: #94a3b8; }
+        
+        .filters-section {
+            background: #1e293b;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-input {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            min-width: 150px;
+        }
+        
+        .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .findings-table {
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #0f172a;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #334155;
+        }
+        
+        tr:hover { background: #252f47; }
+        
+        .severity-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .severity-critical { background: #fee2e2; color: #991b1b; }
+        .severity-high { background: #ffedd5; color: #9a3412; }
+        .severity-medium { background: #fef9c3; color: #854d0e; }
+        .severity-low { background: #dcfce7; color: #166534; }
+        .severity-info { background: #dbeafe; color: #1e40af; }
+        
+        .url-cell {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        
+        .status-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+        
+        .status-new { background: #60a5fa; color: #1e3a8a; }
+        .status-triaged { background: #a78bfa; color: #4c1d95; }
+        .status-reported { background: #fbbf24; color: #78350f; }
+        .status-resolved { background: #22c55e; color: #14532d; }
+        
+        .actions { display: flex; gap: 0.5rem; }
+        
+        .btn {
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover { background: #475569; }
+        .btn-primary { background: #667eea; }
+        .btn-primary:hover { background: #764ba2; }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+        
+        @media (max-width: 1024px) {
+            .charts-section { grid-template-columns: 1fr; }
+            .filters-section { flex-direction: column; }
+            .filter-input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 AI <span>Bug Hunter</span></h1>
+        <div class="auto-refresh" onclick="toggleAutoRefresh()">
+            <span id="refresh-icon">🔄</span>
+            <span id="refresh-text">Auto: ON</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card total">
+                <div class="number" id="stat-total">-</div>
+                <div class="label">Total Findings</div>
+            </div>
+            <div class="stat-card critical">
+                <div class="number" id="stat-critical">-</div>
+                <div class="label">Critical</div>
+            </div>
+            <div class="stat-card high">
+                <div class="number" id="stat-high">-</div>
+                <div class="label">High</div>
+            </div>
+            <div class="stat-card medium">
+                <div class="number" id="stat-medium">-</div>
+                <div class="label">Medium</div>
+            </div>
+            <div class="stat-card low">
+                <div class="number" id="stat-low">-</div>
+                <div class="label">Low</div>
+            </div>
+        </div>
+        
+        <!-- Charts -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h3>Severity Breakdown</h3>
+                <div class="bar-chart" id="severity-chart"></div>
+            </div>
+            <div class="chart-card">
+                <h3>Recent Scans</h3>
+                <div class="scan-list" id="scan-list"></div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filters-section">
+            <select class="filter-input" id="filter-severity" onchange="loadFindings()">
+                <option value="">All Severities</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+                <option value="info">Info</option>
+            </select>
+            
+            <select class="filter-input" id="filter-status" onchange="loadFindings()">
+                <option value="">All Status</option>
+                <option value="new">New</option>
+                <option value="triaged">Triaged</option>
+                <option value="reported">Reported</option>
+                <option value="resolved">Resolved</option>
+            </select>
+            
+            <input type="text" class="filter-input" id="filter-target" placeholder="Filter by target..." oninput="loadFindings()">
+            
+            <button class="btn btn-primary" onclick="loadFindings()">🔍 Apply Filters</button>
+            <button class="btn" onclick="resetFilters()">Reset</button>
+        </div>
+        
+        <!-- Findings Table -->
+        <div class="findings-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Severity</th>
+                        <th>Target</th>
+                        <th>URL</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="findings-tbody">
+                    <tr><td colspan="7" class="loading">Loading findings...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        let autoRefreshInterval = null;
+        let autoRefreshEnabled = true;
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('stat-total').textContent = stats.total_findings || 0;
+                document.getElementById('stat-critical').textContent = stats.by_severity.critical || 0;
+                document.getElementById('stat-high').textContent = stats.by_severity.high || 0;
+                document.getElementById('stat-medium').textContent = stats.by_severity.medium || 0;
+                document.getElementById('stat-low').textContent = stats.by_severity.low || 0;
+                
+                // Update severity chart
+                const chartEl = document.getElementById('severity-chart');
+                chartEl.innerHTML = '';
+                
+                const severities = [
+                    { name: 'Critical', count: stats.by_severity.critical || 0, color: '#ef4444' },
+                    { name: 'High', count: stats.by_severity.high || 0, color: '#f97316' },
+                    { name: 'Medium', count: stats.by_severity.medium || 0, color: '#eab308' },
+                    { name: 'Low', count: stats.by_severity.low || 0, color: '#22c55e' },
+                    { name: 'Info', count: stats.by_severity.info || 0, color: '#3b82f6' },
+                ];
+                
+                const maxCount = Math.max(...severities.map(s => s.count), 1);
+                
+                severities.forEach(sev => {
+                    if (sev.count > 0) {
+                        const height = (sev.count / maxCount) * 150;
+                        chartEl.innerHTML += `
+                            <div class="bar" style="height: ${height}px; background: ${sev.color}">
+                                <div class="count">${sev.count}</div>
+                                <div class="label">${sev.name}</div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                // Update scan list
+                const scanListEl = document.getElementById('scan-list');
+                scanListEl.innerHTML = '';
+                
+                if (stats.recent_scans && stats.recent_scans.length > 0) {
+                    stats.recent_scans.forEach(scan => {
+                        scanListEl.innerHTML += `
+                            <div class="scan-item">
+                                <div>
+                                    <div class="target">${scan.target}</div>
+                                    <div class="meta">${scan.scan_type} • ${scan.total_findings || 0} findings</div>
+                                </div>
+                                <div class="meta">${new Date(scan.created_at).toLocaleString()}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    scanListEl.innerHTML = '<div class="loading">No scans yet</div>';
+                }
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+        
+        async function loadFindings() {
+            try {
+                const params = new URLSearchParams();
+                const severity = document.getElementById('filter-severity').value;
+                const status = document.getElementById('filter-status').value;
+                const target = document.getElementById('filter-target').value;
+                
+                if (severity) params.set('severity', severity);
+                if (status) params.set('status', status);
+                if (target) params.set('target', target);
+                
+                const response = await fetch(`/api/findings?${params}`);
+                const data = await response.json();
+                
+                const tbody = document.getElementById('findings-tbody');
+                
+                if (data.findings.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="loading">No findings match filters</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.findings.map(finding => `
+                    <tr>
+                        <td><code>${finding.id}</code></td>
+                        <td>${finding.title || 'N/A'}</td>
+                        <td><span class="severity-badge severity-${finding.severity}">${finding.severity}</span></td>
+                        <td>${finding.target || 'N/A'}</td>
+                        <td class="url-cell">${finding.url || '-'}</td>
+                        <td><span class="status-badge status-${finding.status || 'new'}">${finding.status || 'new'}</span></td>
+                        <td class="actions">
+                            <button class="btn" onclick="updateStatus('${finding.id}', 'triaged')">Triaged</button>
+                            <button class="btn" onclick="updateStatus('${finding.id}', 'reported')">Reported</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load findings:', error);
+            }
+        }
+        
+        async function updateStatus(findingId, newStatus) {
+            try {
+                await fetch(`/api/findings/${findingId}/status?status=${newStatus}`, {
+                    method: 'PUT',
+                });
+                loadFindings();
+                loadStats();
+            } catch (error) {
+                console.error('Failed to update status:', error);
+            }
+        }
+        
+        function resetFilters() {
+            document.getElementById('filter-severity').value = '';
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-target').value = '';
+            loadFindings();
+        }
+        
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            document.getElementById('refresh-text').textContent = `Auto: ${autoRefreshEnabled ? 'ON' : 'OFF'}`;
+            document.getElementById('refresh-icon').textContent = autoRefreshEnabled ? '🔄' : '⏸️';
+            
+            if (autoRefreshEnabled) {
+                startAutoRefresh();
+            } else {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+        
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                loadStats();
+                loadFindings();
+            }, 10000); // Refresh every 10 seconds
+        }
+        
+        // Initial load
+        loadStats();
+        loadFindings();
+        
+        // Start auto-refresh
+        startAutoRefresh();
+    </script>
+</body>
+</html>
