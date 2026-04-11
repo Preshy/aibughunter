@@ -1,16 +1,16 @@
 """Marketing landing page with payment integration."""
 
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Optional
 import os
-import json
 import uuid
+import sqlite3
 from datetime import datetime
 from pathlib import Path
+from contextlib import contextmanager
 
 app = FastAPI(
     title="AI Bug Hunter",
@@ -18,15 +18,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Templates
+# Templates directory
 templates_dir = Path(__file__).parent / "templates"
-templates_dir.mkdir(exist_ok=True)
-templates = Jinja2Templates(directory=str(templates_dir))
 
-# Database for scan requests and payments (SQLite)
-import sqlite3
-from contextlib import contextmanager
+def read_template(name: str) -> str:
+    """Read HTML template file."""
+    template_file = templates_dir / name
+    if template_file.exists():
+        return template_file.read_text()
+    return f"<h1>Template not found: {name}</h1>"
 
+# Database for scan requests and payments
 db_path = Path(__file__).parent.parent.parent / "data" / "marketing.db"
 db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -60,30 +62,6 @@ def init_db():
                 report_path TEXT,
                 notes TEXT
             );
-            
-            CREATE TABLE IF NOT EXISTS subscriptions (
-                id TEXT PRIMARY KEY,
-                email TEXT NOT NULL,
-                plan TEXT NOT NULL,
-                stripe_customer_id TEXT,
-                stripe_subscription_id TEXT,
-                status TEXT DEFAULT 'active',
-                scans_used INTEGER DEFAULT 0,
-                scans_limit INTEGER DEFAULT 0,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                expires_at TEXT
-            );
-            
-            CREATE TABLE IF NOT EXISTS payments (
-                id TEXT PRIMARY KEY,
-                email TEXT NOT NULL,
-                amount REAL NOT NULL,
-                currency TEXT DEFAULT 'usd',
-                status TEXT DEFAULT 'pending',
-                stripe_payment_id TEXT,
-                description TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
         """)
 
 
@@ -93,47 +71,43 @@ init_db()
 # ===== Landing Pages =====
 
 @app.get("/", response_class=HTMLResponse)
-def landing(request: Request):
+async def landing():
     """Main marketing landing page."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return HTMLResponse(content=read_template("index.html"))
 
 
 @app.get("/pricing", response_class=HTMLResponse)
-def pricing_page(request: Request):
+async def pricing_page():
     """Pricing page."""
-    return templates.TemplateResponse("pricing.html", {"request": request})
+    return HTMLResponse(content=read_template("index.html"))  # Same page, scrolls to pricing
 
 
 @app.get("/docs", response_class=HTMLResponse)
-def docs_page(request: Request):
+async def docs_page():
     """Documentation page."""
-    return templates.TemplateResponse("docs.html", {"request": request})
+    return HTMLResponse(content=read_template("index.html"))
 
 
 # ===== Scan Request Flow =====
 
 @app.get("/scan", response_class=HTMLResponse)
-def scan_request_form(request: Request):
+async def scan_request_form():
     """Scan request form."""
-    return templates.TemplateResponse("scan_request.html", {
-        "request": request,
-        "stripe_key": os.getenv("STRIPE_PUBLISHABLE_KEY", ""),
-    })
+    return HTMLResponse(content=read_template("scan_request.html"))
 
 
 class ScanRequest(BaseModel):
     email: str
     target: str
-    scan_type: str = "quick"  # quick, standard, aggressive
+    scan_type: str = "quick"
     notes: Optional[str] = None
 
 
 @app.post("/api/scan/request")
-def create_scan_request(scan_req: ScanRequest):
+async def create_scan_request(scan_req: ScanRequest):
     """Create a new scan request."""
     scan_id = str(uuid.uuid4())[:8]
     
-    # Determine price
     pricing = {
         "quick": 9.99,
         "standard": 19.99,
@@ -156,7 +130,7 @@ def create_scan_request(scan_req: ScanRequest):
 
 
 @app.get("/checkout/{scan_id}", response_class=HTMLResponse)
-def checkout_page(request: Request, scan_id: str):
+async def checkout_page(scan_id: str):
     """Checkout page for scan."""
     with get_db() as conn:
         scan = conn.execute(
@@ -167,16 +141,20 @@ def checkout_page(request: Request, scan_id: str):
     if not scan:
         raise HTTPException(status_code=404, detail="Scan request not found")
     
-    return templates.TemplateResponse("checkout.html", {
-        "request": request,
-        "scan": dict(scan),
-        "stripe_key": os.getenv("STRIPE_PUBLISHABLE_KEY", ""),
-    })
+    # Replace placeholders in template
+    html = read_template("checkout.html")
+    html = html.replace("{{ scan.target }}", scan["target"])
+    html = html.replace("{{ scan.scan_type }}", scan["scan_type"])
+    html = html.replace("{{ scan.email }}", scan["email"])
+    html = html.replace('{{ "%.2f" | format(scan.amount) }}', f'{scan["amount"]:.2f}')
+    html = html.replace("{{ scan.id }}", scan["id"])
+    
+    return HTMLResponse(content=html)
 
 
 @app.post("/api/checkout/create-session")
-def create_checkout_session(data: dict):
-    """Create Stripe checkout session."""
+async def create_checkout_session(data: dict):
+    """Create checkout session."""
     scan_id = data.get("scan_id")
     
     with get_db() as conn:
@@ -189,7 +167,6 @@ def create_checkout_session(data: dict):
         raise HTTPException(status_code=404, detail="Scan not found")
     
     # In production, create Stripe session here
-    # For now, return mock checkout URL
     return {
         "url": f"/payment/success?scan_id={scan_id}",
         "session_id": f"cs_test_{scan_id}",
@@ -197,7 +174,7 @@ def create_checkout_session(data: dict):
 
 
 @app.get("/payment/success", response_class=HTMLResponse)
-def payment_success(request: Request, scan_id: str):
+async def payment_success(scan_id: str):
     """Payment success page."""
     with get_db() as conn:
         conn.execute(
@@ -209,16 +186,21 @@ def payment_success(request: Request, scan_id: str):
             (scan_id,),
         ).fetchone()
     
-    return templates.TemplateResponse("payment_success.html", {
-        "request": request,
-        "scan": dict(scan) if scan else {},
-    })
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    
+    html = read_template("payment_success.html")
+    html = html.replace("{{ scan.id }}", scan["id"])
+    html = html.replace("{{ scan.target }}", scan["target"])
+    html = html.replace("{{ scan.email }}", scan["email"])
+    
+    return HTMLResponse(content=html)
 
 
 # ===== API Endpoints =====
 
 @app.get("/api/stats")
-def get_marketing_stats():
+async def get_marketing_stats():
     """Get marketing stats."""
     with get_db() as conn:
         total_scans = conn.execute("SELECT COUNT(*) FROM scan_requests").fetchone()[0]
@@ -237,7 +219,7 @@ def get_marketing_stats():
 
 
 @app.get("/api/scan/{scan_id}")
-def get_scan_status(scan_id: str):
+async def get_scan_status(scan_id: str):
     """Check scan status."""
     with get_db() as conn:
         scan = conn.execute(
@@ -249,26 +231,3 @@ def get_scan_status(scan_id: str):
         raise HTTPException(status_code=404, detail="Scan not found")
     
     return dict(scan)
-
-
-# ===== Admin Dashboard =====
-
-@app.get("/admin/scans", response_class=HTMLResponse)
-def admin_scans(request: Request):
-    """Admin view of all scan requests."""
-    with get_db() as conn:
-        scans = conn.execute(
-            "SELECT * FROM scan_requests ORDER BY created_at DESC"
-        ).fetchall()
-    
-    return templates.TemplateResponse("admin_scans.html", {
-        "request": request,
-        "scans": [dict(s) for s in scans],
-    })
-
-
-# ===== Static Files =====
-
-static_dir = Path(__file__).parent / "static"
-if static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
