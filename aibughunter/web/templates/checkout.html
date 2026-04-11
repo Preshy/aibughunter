@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Checkout - AI Bug Hunter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #020617; color: #f8fafc; }
+        .container { max-width: 500px; margin: 0 auto; padding: 4rem 2rem; }
+        h1 { font-size: 2rem; margin-bottom: 2rem; }
+        .summary { background: #1e293b; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .summary-item:last-child { border-top: 1px solid #334155; padding-top: 1rem; margin-bottom: 0; font-weight: 700; font-size: 1.2rem; }
+        .btn { width: 100%; padding: 1rem; background: linear-gradient(135deg, #6366f1, #ec4899); border: none; border-radius: 8px; color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+        .back { display: inline-block; margin-bottom: 2rem; color: #94a3b8; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/scan" class="back">← Back</a>
+        <h1>💳 Checkout</h1>
+        
+        <div class="summary">
+            <div class="summary-item">
+                <span>Target:</span>
+                <span>{{ scan.target }}</span>
+            </div>
+            <div class="summary-item">
+                <span>Scan Type:</span>
+                <span>{{ scan.scan_type }}</span>
+            </div>
+            <div class="summary-item">
+                <span>Email:</span>
+                <span>{{ scan.email }}</span>
+            </div>
+            <div class="summary-item">
+                <span>Total:</span>
+                <span>${{ "%.2f" | format(scan.amount) }}</span>
+            </div>
+        </div>
+        
+        <button id="checkoutBtn" class="btn">Pay with Card →</button>
+        
+        <p style="margin-top: 1rem; font-size: 0.875rem; color: #94a3b8; text-align: center;">
+            🔒 Secure payment powered by Stripe
+        </p>
+    </div>
+    
+    <script>
+        document.getElementById('checkoutBtn').addEventListener('click', async () => {
+            const response = await fetch('/api/checkout/create-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scan_id: '{{ scan.id }}' })
+            });
+            
+            const result = await response.json();
+            window.location.href = result.url;
+        });
+    </script>
+</body>
+</html>

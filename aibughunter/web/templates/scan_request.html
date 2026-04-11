@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Request a Scan - AI Bug Hunter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #020617; color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; padding: 4rem 2rem; }
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: #94a3b8; margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; font-size: 1rem; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #6366f1; }
+        .btn { width: 100%; padding: 1rem; background: linear-gradient(135deg, #6366f1, #ec4899); border: none; border-radius: 8px; color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+        .btn:hover { opacity: 0.9; }
+        .back { display: inline-block; margin-bottom: 2rem; color: #94a3b8; text-decoration: none; }
+        .back:hover { color: #f8fafc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back">← Back to Home</a>
+        <h1>🎯 Request a Scan</h1>
+        <p class="subtitle">Submit your target and we'll find the bugs</p>
+        
+        <form id="scanForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" required placeholder="you@example.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Target URL</label>
+                <input type="url" id="target" required placeholder="https://target.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Scan Type</label>
+                <select id="scanType">
+                    <option value="quick">Quick Scan - $9.99 (Basic)</option>
+                    <option value="standard" selected>Standard Scan - $19.99 (Recommended)</option>
+                    <option value="aggressive">Aggressive Scan - $49.99 (Comprehensive)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Notes (Optional)</label>
+                <textarea id="notes" rows="4" placeholder="Any specific areas of concern or authorization details..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn">Continue to Checkout →</button>
+        </form>
+    </div>
+    
+    <script>
+        document.getElementById('scanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                email: document.getElementById('email').value,
+                target: document.getElementById('target').value,
+                scan_type: document.getElementById('scanType').value,
+                notes: document.getElementById('notes').value
+            };
+            
+            const response = await fetch('/api/scan/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            window.location.href = result.checkout_url;
+        });
+    </script>
+</body>
+</html>

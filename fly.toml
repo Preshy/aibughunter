@@ -1,0 +1,26 @@
+# Fly.io configuration for AI Bug Hunter Marketing Site
+# Deploy with: fly launch
+
+app = "aibughunter-marketing"
+primary_region = "sjc"  # San Jose (close to US West Coast)
+
+[build]
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[[statics]]
+  guest_path = "/app/data"
+  url_path = "/data"
