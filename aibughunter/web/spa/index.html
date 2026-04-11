@@ -6,1163 +6,226 @@
     <title>AI Bug Hunter - Automated Bug Bounty Platform</title>
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #ec4899;
-            --accent: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --dark: #0f172a;
-            --darker: #020617;
-            --card: #1e293b;
-            --card-hover: #252f47;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
-            --success-bg: rgba(16, 185, 129, 0.1);
-            --warning-bg: rgba(245, 158, 11, 0.1);
-            --danger-bg: rgba(239, 68, 68, 0.1);
+            --primary: #6366f1; --primary-dark: #4f46e5; --secondary: #ec4899;
+            --accent: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --dark: #0f172a; --darker: #020617; --card: #1e293b;
+            --card-hover: #252f47; --text: #f8fafc; --text-muted: #94a3b8;
+            --border: #334155; --success-bg: rgba(16, 185, 129, 0.1);
+            --warning-bg: rgba(245, 158, 11, 0.1); --danger-bg: rgba(239, 68, 68, 0.1);
         }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--darker); color: var(--text); line-height: 1.6; min-height: 100vh; }
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--darker);
-            color: var(--text);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
+        /* Marketing Page Styles */
+        .marketing-nav { position: fixed; top: 0; width: 100%; background: rgba(2, 6, 23, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); z-index: 100; padding: 1rem 2rem; }
+        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .nav-logo { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; }
+        .nav-links a:hover { color: var(--text); }
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8rem 2rem 4rem; position: relative; background: radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 60%); }
+        .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.875rem; color: var(--primary); margin-bottom: 2rem; animation: fadeInDown 0.6s ease-out; }
+        .hero h1 { font-size: 4.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; animation: fadeInUp 0.6s ease-out 0.1s both; }
+        .hero h1 span { background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-subtitle { font-size: 1.5rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 3rem; animation: fadeInUp 0.6s ease-out 0.2s both; }
+        .hero-cta { display: flex; gap: 1rem; justify-content: center; margin-bottom: 4rem; animation: fadeInUp 0.6s ease-out 0.3s both; }
+        .hero-stats { display: flex; gap: 3rem; animation: fadeInUp 0.6s ease-out 0.4s both; }
+        .hero-stat .number { font-size: 2.5rem; font-weight: 700; color: var(--primary); }
+        .hero-stat .label { font-size: 0.875rem; color: var(--text-muted); }
+        .code-showcase { max-width: 600px; margin: 3rem auto 0; background: var(--dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; font-family: 'Courier New', monospace; font-size: 0.9rem; text-align: left; animation: fadeInUp 0.6s ease-out 0.5s both; }
+        .code-line { margin: 0.25rem 0; }
+        .code-comment { color: var(--text-muted); }
+        .code-keyword { color: #c084fc; }
+        .code-string { color: #34d399; }
+        .code-function { color: #60a5fa; }
+        .section { padding: 6rem 2rem; max-width: 1200px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 4rem; }
+        .section-header h2 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .section-header p { color: var(--text-muted); font-size: 1.25rem; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; }
+        .feature-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; transition: all 0.3s; }
+        .feature-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .feature-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .feature-card p { color: var(--text-muted); }
+        .how-it-works { background: var(--dark); }
+        .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; }
+        .step-card { text-align: center; padding: 2rem; }
+        .step-number { width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin: 0 auto 1.5rem; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; align-items: start; }
+        .pricing-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; text-align: center; position: relative; transition: all 0.3s; }
+        .pricing-card:hover { transform: translateY(-5px); }
+        .pricing-card.popular { border-color: var(--primary); transform: scale(1.02); }
+        .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 0.35rem 1.25rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+        .pricing-card h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .price { font-size: 3.5rem; font-weight: 700; margin: 1rem 0; }
+        .price span { font-size: 1rem; color: var(--text-muted); }
+        .features-list { list-style: none; margin: 2rem 0; text-align: left; }
+        .features-list li { padding: 0.75rem 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; }
+        .features-list li::before { content: '✓'; color: var(--accent); font-weight: 700; }
+        .testimonials { background: var(--dark); }
+        .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .testimonial-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
+        .testimonial-text { color: var(--text-muted); margin-bottom: 1.5rem; font-style: italic; }
+        .testimonial-author { display: flex; align-items: center; gap: 1rem; }
+        .testimonial-avatar { width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        .cta-section { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; padding: 6rem 2rem; }
+        .cta-section h2 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .cta-section p { color: var(--text-muted); font-size: 1.25rem; margin-bottom: 2rem; }
+        .footer { background: var(--darker); border-top: 1px solid var(--border); padding: 4rem 2rem 2rem; }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 3rem; }
+        .footer-links h4 { margin-bottom: 1rem; }
+        .footer-links a { display: block; color: var(--text-muted); text-decoration: none; padding: 0.35rem 0; }
+        .footer-links a:hover { color: var(--text); }
+        .footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.875rem; }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Auth Pages */
-        .auth-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
-        }
-        
-        .auth-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 3rem;
-            width: 100%;
-            max-width: 420px;
-        }
-        
-        .auth-card h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .auth-card .subtitle {
-            color: var(--text-muted);
-            margin-bottom: 2rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background: var(--darker);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-        }
-        
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-        
-        .btn-secondary:hover { border-color: var(--primary); }
-        
-        .btn-success { background: var(--accent); color: white; }
-        .btn-warning { background: var(--warning); color: var(--dark); }
-        .btn-danger { background: var(--danger); color: white; }
-        
-        .btn-block { width: 100%; }
-        
-        .auth-footer {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: var(--text-muted);
-        }
-        
-        .auth-footer a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-        
-        /* Dashboard Layout */
-        .dashboard {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        .sidebar {
-            width: 260px;
-            background: var(--dark);
-            border-right: 1px solid var(--border);
-            padding: 1.5rem;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .nav-links {
-            list-style: none;
-            margin-bottom: 2rem;
-        }
-        
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            color: var(--text-muted);
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 0.25rem;
-        }
-        
-        .nav-link:hover, .nav-link.active {
-            background: var(--card);
-            color: var(--text);
-        }
-        
-        .nav-link.active {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2));
-            color: var(--primary);
-        }
-        
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            padding: 2rem;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        
-        .header h1 {
-            font-size: 2rem;
-        }
-        
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .plan-badge {
-            padding: 0.35rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .plan-free { background: var(--border); color: var(--text-muted); }
-        .plan-pro { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
-        .plan-enterprise { background: rgba(16, 185, 129, 0.2); color: var(--accent); }
-        
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.2s;
-        }
-        
-        .stat-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-        
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-        
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-        
-        /* Content Sections */
-        .section {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .section-header h2 {
-            font-size: 1.25rem;
-        }
-        
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th {
-            text-align: left;
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        tr:last-child td { border-bottom: none; }
+        /* Dashboard Styles */
+        .dashboard { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: var(--dark); border-right: 1px solid var(--border); padding: 1.5rem; position: fixed; height: 100vh; overflow-y: auto; }
+        .main-content { flex: 1; margin-left: 260px; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-muted); text-decoration: none; cursor: pointer; transition: all 0.2s; margin-bottom: 0.25rem; }
+        .nav-link:hover, .nav-link.active { background: var(--card); color: var(--text); }
+        .nav-link.active { background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.2)); color: var(--primary); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+        .stat-value { font-size: 2.5rem; font-weight: 700; }
+        .stat-label { color: var(--text-muted); font-size: 0.875rem; }
+        .section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase; }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); }
         tr:hover td { background: var(--card-hover); }
-        
-        /* Status Badges */
-        .status-badge {
-            display: inline-block;
-            padding: 0.35rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-        
-        .status-pending { background: var(--warning-bg); color: var(--warning); }
-        .status-queued { background: var(--warning-bg); color: var(--warning); }
-        .status-running { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+        .status-badge { display: inline-block; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
+        .status-pending, .status-queued { background: var(--warning-bg); color: var(--warning); }
         .status-completed { background: var(--success-bg); color: var(--accent); }
-        .status-failed { background: var(--danger-bg); color: var(--danger); }
         .status-paid { background: var(--success-bg); color: var(--accent); }
         .status-unpaid { background: var(--warning-bg); color: var(--warning); }
-        
-        /* Scan Request Form */
-        .scan-form {
-            max-width: 600px;
-        }
-        
-        .scan-types {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .scan-type-card {
-            background: var(--darker);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-        
-        .scan-type-card:hover { border-color: var(--primary); }
-        .scan-type-card.selected {
-            border-color: var(--primary);
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
-        }
-        
-        .scan-type-card .name { font-weight: 600; margin-bottom: 0.5rem; }
-        .scan-type-card .price { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
-        .scan-type-card .desc { color: var(--text-muted); font-size: 0.875rem; }
-        
-        /* Pricing Plans */
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .pricing-card {
-            background: var(--darker);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            position: relative;
-        }
-        
-        .pricing-card.popular {
-            border-color: var(--primary);
-            transform: scale(1.02);
-        }
-        
-        .popular-badge {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            padding: 0.35rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .pricing-card .price {
-            font-size: 3rem;
-            font-weight: 700;
-            margin: 1rem 0;
-        }
-        
-        .pricing-card .price span {
-            font-size: 1rem;
-            color: var(--text-muted);
-        }
-        
-        .features-list {
-            list-style: none;
-            margin: 1.5rem 0;
-            text-align: left;
-        }
-        
-        .features-list li {
-            padding: 0.5rem 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .features-list li::before {
-            content: '✓';
-            color: var(--accent);
-        }
-        
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .modal-overlay.active { display: flex; }
-        
-        .modal {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-        }
-        
-        .modal h3 { margin-bottom: 1rem; }
-        .modal-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(2, 6, 23, 0.9);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
-        
-        .loading-overlay.active { display: flex; }
-        
-        /* Alert Messages */
-        .alert {
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        
+        .plan-badge { padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .plan-free { background: var(--border); color: var(--text-muted); }
+        .plan-pro { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; width: 100%; max-width: 420px; }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        input, select, textarea { width: 100%; padding: 0.75rem 1rem; background: var(--darker); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-secondary:hover { border-color: var(--primary); }
+        .btn-block { width: 100%; }
+        .auth-footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); }
+        .auth-footer a { color: var(--primary); text-decoration: none; }
+        .alert { padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1rem; position: fixed; top: 20px; right: 20px; z-index: 3000; }
         .alert-success { background: var(--success-bg); border: 1px solid var(--accent); }
-        .alert-warning { background: var(--warning-bg); border: 1px solid var(--warning); }
         .alert-error { background: var(--danger-bg); border: 1px solid var(--danger); }
-        
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-        }
-        
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.9); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .loading-overlay.active { display: flex; }
+        .spinner { border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
         .empty-state .icon { font-size: 4rem; margin-bottom: 1rem; }
-        
-        /* Responsive */
         @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero-subtitle { font-size: 1.1rem; }
+            .hero-cta { flex-direction: column; }
+            .hero-stats { flex-direction: column; gap: 1.5rem; }
             .sidebar { display: none; }
             .main-content { margin-left: 0; }
-            .scan-types { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr; }
+            .footer-content { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
         }
     </style>
 </head>
 <body>
-    <div id="app">
-        <!-- Content injected by JavaScript -->
-    </div>
-    
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner" style="width: 48px; height: 48px;"></div>
-    </div>
+    <div id="app"></div>
+    <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
     
     <script>
-        // ===== App State =====
         const API_BASE = window.location.origin;
-        let state = {
-            token: localStorage.getItem('token'),
-            user: JSON.parse(localStorage.getItem('user') || 'null'),
-            currentRoute: 'dashboard',
-            scans: [],
-            plans: [],
-        };
+        let state = { token: localStorage.getItem('token'), user: JSON.parse(localStorage.getItem('user') || 'null'), currentRoute: isAuthenticated() ? 'dashboard' : 'landing', scans: [], plans: [] };
         
-        // ===== Auth Functions =====
-        async function login(email, password) {
-            showLoading(true);
-            try {
-                const res = await fetch(`${API_BASE}/api/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
-                });
-                
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.detail || 'Login failed');
-                }
-                
-                const data = await res.json();
-                state.token = data.token;
-                state.user = data.user;
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                
-                navigate('dashboard');
-            } catch (err) {
-                showAlert(err.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
+        function isAuthenticated() { return !!state.token; }
+        function showLoading(show) { document.getElementById('loadingOverlay').classList.toggle('active', show); }
+        function showAlert(msg, type='info') { const a = document.createElement('div'); a.className = `alert alert-${type}`; a.textContent = msg; document.body.appendChild(a); setTimeout(() => a.remove(), 5000); }
+        function navigate(route) { state.currentRoute = route; render(); }
         
-        async function register(email, password, name) {
-            showLoading(true);
-            try {
-                const res = await fetch(`${API_BASE}/api/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, name }),
-                });
-                
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.detail || 'Registration failed');
-                }
-                
-                const data = await res.json();
-                state.token = data.token;
-                state.user = data.user;
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                
-                navigate('dashboard');
-            } catch (err) {
-                showAlert(err.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
+        // Auth
+        async function login(email, password) { showLoading(true); try { const res = await fetch(`${API_BASE}/api/auth/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) }); if (!res.ok) throw new Error((await res.json()).detail || 'Login failed'); const data = await res.json(); state.token = data.token; state.user = data.user; localStorage.setItem('token', data.token); localStorage.setItem('user', JSON.stringify(data.user)); navigate('dashboard'); } catch (e) { showAlert(e.message, 'error'); } finally { showLoading(false); } }
+        async function register(email, password, name) { showLoading(true); try { const res = await fetch(`${API_BASE}/api/auth/register`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password, name}) }); if (!res.ok) throw new Error((await res.json()).detail || 'Registration failed'); const data = await res.json(); state.token = data.token; state.user = data.user; localStorage.setItem('token', data.token); localStorage.setItem('user', JSON.stringify(data.user)); navigate('dashboard'); } catch (e) { showAlert(e.message, 'error'); } finally { showLoading(false); } }
+        function logout() { state.token = null; state.user = null; localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('landing'); }
         
-        function logout() {
-            state.token = null;
-            state.user = null;
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            navigate('login');
-        }
+        // API
+        async function fetchScans() { const res = await fetch(`${API_BASE}/api/scans`, { headers: {'Authorization': `Bearer ${state.token}`} }); if (res.ok) state.scans = await res.json(); }
+        async function fetchPlans() { const res = await fetch(`${API_BASE}/api/plans`); if (res.ok) state.plans = (await res.json()).plans; }
+        async function requestScan(target, type, notes) { showLoading(true); try { const res = await fetch(`${API_BASE}/api/scans`, { method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${state.token}`}, body: JSON.stringify({target, scan_type: type, notes}) }); if (!res.ok) throw new Error((await res.json()).detail || 'Failed'); const data = await res.json(); if (data.checkout_url) { state.pendingScan = data; navigate('checkout'); } else { showAlert('Scan queued!', 'success'); navigate('scans'); } } catch(e) { showAlert(e.message, 'error'); } finally { showLoading(false); } }
+        async function checkout(scanId) { showLoading(true); try { const res = await fetch(`${API_BASE}/api/payments/checkout?scan_id=${scanId}`, { headers: {'Authorization': `Bearer ${state.token}`} }); const data = await res.json(); if (res.ok) { showAlert('Payment successful!', 'success'); navigate('scans'); } else throw new Error(data.detail || 'Failed'); } catch(e) { showAlert(e.message, 'error'); } finally { showLoading(false); } }
+        async function upgradePlan(plan) { showLoading(true); try { const res = await fetch(`${API_BASE}/api/plans/upgrade`, { method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${state.token}`}, body: JSON.stringify({plan}) }); const data = await res.json(); if (res.ok) { showAlert(`Upgraded to ${data.plan}!`, 'success'); state.user.plan = data.plan; state.user.scans_limit = data.scans_limit; localStorage.setItem('user', JSON.stringify(state.user)); navigate('dashboard'); } else throw new Error(data.detail || 'Failed'); } catch(e) { showAlert(e.message, 'error'); } finally { showLoading(false); } }
+        function downloadReport(id) { window.open(`${API_BASE}/api/scans/${id}/report?authorization=Bearer ${state.token}`, '_blank'); }
         
-        function isAuthenticated() {
-            return !!state.token;
-        }
-        
-        // ===== API Functions =====
-        async function fetchScans() {
-            const res = await fetch(`${API_BASE}/api/scans`, {
-                headers: { 'Authorization': `Bearer ${state.token}` },
-            });
-            if (res.ok) state.scans = await res.json();
-        }
-        
-        async function fetchPlans() {
-            const res = await fetch(`${API_BASE}/api/plans`);
-            if (res.ok) state.plans = (await res.json()).plans;
-        }
-        
-        async function requestScan(target, scanType, notes) {
-            showLoading(true);
-            try {
-                const res = await fetch(`${API_BASE}/api/scans`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.token}`,
-                    },
-                    body: JSON.stringify({ target, scan_type: scanType, notes }),
-                });
-                
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.detail || 'Scan request failed');
-                }
-                
-                const data = await res.json();
-                
-                if (data.checkout_url) {
-                    // Go to checkout
-                    state.pendingScan = data;
-                    navigate('checkout');
-                } else {
-                    showAlert('Scan queued successfully!', 'success');
-                    navigate('scans');
-                }
-            } catch (err) {
-                showAlert(err.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-        
-        async function checkout(scanId) {
-            showLoading(true);
-            try {
-                const res = await fetch(`${API_BASE}/api/payments/checkout?scan_id=${scanId}`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` },
-                });
-                
-                const data = await res.json();
-                
-                if (res.ok) {
-                    showAlert('Payment successful! Scan queued.', 'success');
-                    navigate('scans');
-                } else {
-                    throw new Error(data.detail || 'Payment failed');
-                }
-            } catch (err) {
-                showAlert(err.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-        
-        async function upgradePlan(plan) {
-            showLoading(true);
-            try {
-                const res = await fetch(`${API_BASE}/api/plans/upgrade`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.token}`,
-                    },
-                    body: JSON.stringify({ plan }),
-                });
-                
-                const data = await res.json();
-                
-                if (res.ok) {
-                    showAlert(`Upgraded to ${data.plan} plan!`, 'success');
-                    state.user.plan = data.plan;
-                    state.user.scans_limit = data.scans_limit;
-                    localStorage.setItem('user', JSON.stringify(state.user));
-                    navigate('dashboard');
-                } else {
-                    throw new Error(data.detail || 'Upgrade failed');
-                }
-            } catch (err) {
-                showAlert(err.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-        
-        async function downloadReport(scanId) {
-            window.open(`${API_BASE}/api/scans/${scanId}/report?authorization=Bearer ${state.token}`, '_blank');
-        }
-        
-        // ===== Navigation =====
-        function navigate(route) {
-            state.currentRoute = route;
-            render();
-        }
-        
-        // ===== UI Helpers =====
-        function showLoading(show) {
-            document.getElementById('loadingOverlay').classList.toggle('active', show);
-        }
-        
-        function showAlert(message, type = 'info') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.style.cssText = 'position:fixed;top:20px;right:20px;z-index:3000;max-width:400px;';
-            alertDiv.textContent = message;
-            document.body.appendChild(alertDiv);
-            setTimeout(() => alertDiv.remove(), 5000);
-        }
-        
-        // ===== Render Functions =====
+        // Render
         function render() {
             const app = document.getElementById('app');
-            
             if (!isAuthenticated()) {
-                if (state.currentRoute === 'register') {
-                    app.innerHTML = renderRegister();
-                } else {
-                    app.innerHTML = renderLogin();
-                }
+                if (state.currentRoute === 'login') app.innerHTML = renderLogin();
+                else if (state.currentRoute === 'register') app.innerHTML = renderRegister();
+                else app.innerHTML = renderLanding();
             } else {
                 app.innerHTML = renderDashboard();
             }
-            
-            // Attach event listeners
-            attachEventListeners();
+            attachEvents();
         }
         
-        function renderLogin() {
+        function renderLanding() {
             return `
-                <div class="auth-container">
-                    <div class="auth-card">
-                        <h1>🎯 Welcome Back</h1>
-                        <p class="subtitle">Sign in to your account</p>
-                        
-                        <form id="loginForm">
-                            <div class="form-group">
-                                <label>Email Address</label>
-                                <input type="email" id="loginEmail" required placeholder="you@example.com">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" id="loginPassword" required placeholder="Enter password">
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary btn-block">Sign In →</button>
-                        </form>
-                        
-                        <div class="auth-footer">
-                            Don't have an account? <a href="#" onclick="navigate('register'); return false;">Sign up</a>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderRegister() {
-            return `
-                <div class="auth-container">
-                    <div class="auth-card">
-                        <h1>🎯 Create Account</h1>
-                        <p class="subtitle">Start hunting bugs today</p>
-                        
-                        <form id="registerForm">
-                            <div class="form-group">
-                                <label>Name</label>
-                                <input type="text" id="regName" placeholder="John Doe">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Email Address</label>
-                                <input type="email" id="regEmail" required placeholder="you@example.com">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" id="regPassword" required placeholder="Min 6 characters">
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary btn-block">Create Account →</button>
-                        </form>
-                        
-                        <div class="auth-footer">
-                            Already have an account? <a href="#" onclick="navigate('login'); return false;">Sign in</a>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderDashboard() {
-            const user = state.user;
-            const scansUsed = user.scans_used || 0;
-            const scansLimit = user.scans_limit || 1;
-            const scansRemaining = scansLimit === -1 ? 'Unlimited' : `${scansLimit - scansUsed} of ${scansLimit}`;
-            
-            return `
-                <div class="dashboard">
-                    ${renderSidebar()}
-                    
-                    <div class="main-content">
-                        ${renderHeader()}
-                        
-                        ${state.currentRoute === 'dashboard' ? renderDashboardContent() : ''}
-                        ${state.currentRoute === 'new-scan' ? renderNewScanContent() : ''}
-                        ${state.currentRoute === 'scans' ? renderScansContent() : ''}
-                        ${state.currentRoute === 'billing' ? renderBillingContent() : ''}
-                        ${state.currentRoute === 'checkout' ? renderCheckoutContent() : ''}
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderSidebar() {
-            return `
-                <aside class="sidebar">
-                    <div class="logo">🎯 AI Bug Hunter</div>
-                    
-                    <ul class="nav-links">
-                        <li class="nav-link ${state.currentRoute === 'dashboard' ? 'active' : ''}" onclick="navigate('dashboard')">
-                            📊 Dashboard
-                        </li>
-                        <li class="nav-link ${state.currentRoute === 'new-scan' ? 'active' : ''}" onclick="navigate('new-scan')">
-                            🎯 New Scan
-                        </li>
-                        <li class="nav-link ${state.currentRoute === 'scans' ? 'active' : ''}" onclick="navigate('scans')">
-                            📋 My Scans
-                        </li>
-                        <li class="nav-link ${state.currentRoute === 'billing' ? 'active' : ''}" onclick="navigate('billing')">
-                            💳 Billing
-                        </li>
-                    </ul>
-                    
-                    <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">
-                            ${state.user.email}
-                        </div>
-                        <button onclick="logout()" class="btn btn-secondary btn-block" style="font-size: 0.875rem;">
-                            Sign Out
-                        </button>
-                    </div>
-                </aside>
-            `;
-        }
-        
-        function renderHeader() {
-            const user = state.user;
-            return `
-                <div class="header">
-                    <h1>${getPageTitle()}</h1>
-                    <div class="user-menu">
-                        <span class="plan-badge plan-${user.plan}">${user.plan}</span>
-                        <span style="color: var(--text-muted);">${user.name || user.email}</span>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function getPageTitle() {
-            const titles = {
-                'dashboard': 'Dashboard',
-                'new-scan': 'Request New Scan',
-                'scans': 'My Scans',
-                'billing': 'Billing & Plans',
-                'checkout': 'Checkout',
-            };
-            return titles[state.currentRoute] || 'Dashboard';
-        }
-        
-        function renderDashboardContent() {
-            const completedScans = state.scans.filter(s => s.status === 'completed').length;
-            
-            return `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">${state.scans.length}</div>
-                        <div class="stat-label">Total Scans</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${completedScans}</div>
-                        <div class="stat-label">Completed</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">0</div>
-                        <div class="stat-label">Vulnerabilities Found</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${state.user.scans_limit === -1 ? '∞' : state.user.scans_limit - state.user.scans_used}</div>
-                        <div class="stat-label">Scans Remaining</div>
-                    </div>
-                </div>
+                <nav class="marketing-nav"><div class="nav-container"><div class="nav-logo">🎯 AI Bug Hunter</div><ul class="nav-links"><li><a href="#features">Features</a></li><li><a href="#how-it-works">How It Works</a></li><li><a href="#pricing">Pricing</a></li></ul><div style="display:flex;gap:1rem;"><button class="btn btn-secondary" onclick="navigate('login')">Sign In</button><button class="btn btn-primary" onclick="navigate('register')">Get Started</button></div></div></nav>
                 
-                <div class="section">
-                    <div class="section-header">
-                        <h2>Recent Scans</h2>
-                        <button class="btn btn-primary" onclick="navigate('new-scan')">+ New Scan</button>
-                    </div>
-                    
-                    ${state.scans.length === 0 ? `
-                        <div class="empty-state">
-                            <div class="icon">🎯</div>
-                            <h3>No scans yet</h3>
-                            <p>Request your first scan to get started</p>
-                            <button class="btn btn-primary" onclick="navigate('new-scan')">Request Scan</button>
-                        </div>
-                    ` : `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Target</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${state.scans.slice(0, 5).map(scan => `
-                                    <tr>
-                                        <td>${scan.target}</td>
-                                        <td><span class="status-badge status-${scan.scan_type}">${scan.scan_type}</span></td>
-                                        <td><span class="status-badge status-${scan.status}">${scan.status}</span></td>
-                                        <td>${new Date(scan.created_at).toLocaleDateString()}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `}
-                </div>
+                <section class="hero"><div class="hero-badge">🚀 AI-Powered Security Testing</div><h1>Find Bugs.<br><span>Get Paid.</span></h1><p class="hero-subtitle">Automated vulnerability scanning that discovers security flaws, generates professional reports, and helps you earn bug bounties.</p><div class="hero-cta"><button class="btn btn-primary" onclick="navigate('register')" style="font-size:1.25rem;padding:1rem 2rem;">🎯 Start Hunting - It's Free</button><a href="https://github.com/Preshy/aibughunter" class="btn btn-secondary" style="font-size:1.25rem;padding:1rem 2rem;">⭐ Star on GitHub</a></div><div class="hero-stats"><div class="hero-stat"><div class="number">19</div><div class="label">Vulns Found</div></div><div class="hero-stat"><div class="number">12</div><div class="label">High Severity</div></div><div class="hero-stat"><div class="number">3</div><div class="label">Sites Scanned</div></div></div><div class="code-showcase"><div class="code-line"><span class="code-comment"># Install and scan in 2 lines</span></div><div class="code-line"><span class="code-keyword">pip</span> install aibughunter</div><div class="code-line"><span class="code-keyword">aibughunter</span> hunt <span class="code-string">https://target.com</span></div></div></section>
+                
+                <section class="section" id="features"><div class="section-header"><h2>Everything You Need</h2><p>From reconnaissance to report, fully automated</p></div><div class="features-grid"><div class="feature-card"><div class="feature-icon">🔍</div><h3>Automated Recon</h3><p>Subdomain enumeration, tech analysis, endpoint discovery powered by AI.</p></div><div class="feature-card"><div class="feature-icon">🤖</div><h3>AI Analysis</h3><p>Qwen CLI identifies attack vectors and suggests the most profitable vulns to test.</p></div><div class="feature-card"><div class="feature-icon">🛡️</div><h3>Vuln Scanning</h3><p>Automated XSS, SQLi, SSRF, IDOR, auth bypass testing across web apps and APIs.</p></div><div class="feature-card"><div class="feature-icon">🐉</div><h3>600+ Kali Tools</h3><p>Direct integration with nmap, sqlmap, Metasploit, and more.</p></div><div class="feature-card"><div class="feature-icon">📝</div><h3>Pro Reports</h3><p>Beautiful HTML/Markdown reports ready for HackerOne or Bugcrowd submission.</p></div><div class="feature-card"><div class="feature-icon">🌐</div><h3>Web Dashboard</h3><p>Manage scans, track findings, and monitor your bug hunting progress.</p></div></div></section>
+                
+                <section class="how-it-works" id="how-it-works"><div class="section" style="background:transparent;"><div class="section-header"><h2>How It Works</h2><p>From target to payout in 4 steps</p></div><div class="steps-grid"><div class="step-card"><div class="step-number">1</div><h3>Submit Target</h3><p>Enter the URL or domain you want to test.</p></div><div class="step-card"><div class="step-number">2</div><h3>AI Scans</h3><p>Comprehensive recon and vulnerability testing.</p></div><div class="step-card"><div class="step-number">3</div><h3>Get Report</h3><p>Professional report with findings and POCs.</p></div><div class="step-card"><div class="step-number">4</div><h3>Submit & Earn</h3><p>Submit to bug bounty programs and get paid.</p></div></div></div></section>
+                
+                <section class="section" id="pricing"><div class="section-header"><h2>Simple Pricing</h2><p>Choose your plan</p></div><div class="pricing-grid"><div class="pricing-card"><h3>Free Trial</h3><div class="price">$0</div><p>1 scan included</p><ul class="features-list"><li>Basic vuln scan</li><li>Up to 25 pages</li><li>Markdown report</li><li>48h turnaround</li></ul><button class="btn btn-secondary btn-block" onclick="navigate('register')">Start Free</button></div><div class="pricing-card popular"><div class="popular-badge">Most Popular</div><h3>Pro</h3><div class="price">$49<span>/mo</span></div><p>10 scans/month</p><ul class="features-list"><li>Full vuln scan</li><li>Up to 50 pages</li><li>HTML + MD reports</li><li>AI analysis</li><li>24h turnaround</li><li>Priority support</li></ul><button class="btn btn-primary btn-block" onclick="navigate('register')">Get Pro</button></div><div class="pricing-card"><h3>Enterprise</h3><div class="price">$199<span>/mo</span></div><p>Unlimited scans</p><ul class="features-list"><li>Everything in Pro</li><li>Kali tools integration</li><li>Exploitation testing</li><li>Custom POCs</li><li>12h turnaround</li><li>Dedicated support</li></ul><button class="btn btn-secondary btn-block" onclick="navigate('register')">Contact Sales</button></div></div></section>
+                
+                <section class="testimonials"><div class="section" style="background:transparent;"><div class="section-header"><h2>Loved by Bug Hunters</h2></div><div class="testimonials-grid"><div class="testimonial-card"><p class="testimonial-text">"Found 3 high-severity vulns on my first scan. The reports are submission-ready."</p><div class="testimonial-author"><div class="testimonial-avatar">👨‍💻</div><div><div class="testimonial-name">Alex Chen</div><div class="testimonial-role">Bug Bounty Hunter</div></div></div></div><div class="testimonial-card"><p class="testimonial-text">"Saved me hours of manual testing. The AI analysis is spot on."</p><div class="testimonial-author"><div class="testimonial-avatar">👩‍🔬</div><div><div class="testimonial-name">Sarah Kim</div><div class="testimonial-role">Security Researcher</div></div></div></div><div class="testimonial-card"><p class="testimonial-text">"Best automated scanner I've used. Worth every penny."</p><div class="testimonial-author"><div class="testimonial-avatar">🧑‍💼</div><div><div class="testimonial-name">Mike Johnson</div><div class="testimonial-role">Pentester</div></div></div></div></div></div></section>
+                
+                <section class="cta-section"><h2>Ready to Start Hunting?</h2><p>Join thousands of bug hunters using AI to find vulnerabilities faster.</p><div style="display:flex;gap:1rem;justify-content:center;"><button class="btn btn-primary" onclick="navigate('register')" style="font-size:1.25rem;padding:1rem 2rem;">🎯 Get Started Free</button><a href="https://github.com/Preshy/aibughunter" class="btn btn-secondary" style="font-size:1.25rem;padding:1rem 2rem;">📖 Documentation</a></div></section>
+                
+                <footer class="footer"><div class="footer-content"><div class="footer-brand"><div style="font-size:1.5rem;font-weight:700;">🎯 AI Bug Hunter</div><p>AI-powered automated bug bounty hunting platform.</p></div><div class="footer-links"><h4>Product</h4><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="https://github.com/Preshy/aibughunter">GitHub</a></div><div class="footer-links"><h4>Resources</h4><a href="#">Documentation</a><a href="#">API Reference</a><a href="#">Blog</a></div><div class="footer-links"><h4>Company</h4><a href="#">About</a><a href="#">Contact</a><a href="#">Privacy</a></div></div><div class="footer-bottom"><div>© 2024 AI Bug Hunter</div><div>⚠️ For authorized testing only</div></div></footer>
             `;
         }
         
-        function renderNewScanContent() {
-            return `
-                <div class="section">
-                    <div class="scan-form">
-                        <div class="form-group">
-                            <label>Target URL</label>
-                            <input type="url" id="scanTarget" required placeholder="https://target.com">
-                        </div>
-                        
-                        <label>Scan Type</label>
-                        <div class="scan-types" id="scanTypes">
-                            <div class="scan-type-card" data-type="quick" onclick="selectScanType('quick')">
-                                <div class="name">Quick</div>
-                                <div class="price">$9.99</div>
-                                <div class="desc">Basic scan, 25 pages, 48h</div>
-                            </div>
-                            <div class="scan-type-card selected" data-type="standard" onclick="selectScanType('standard')">
-                                <div class="name">Standard</div>
-                                <div class="price">$19.99</div>
-                                <div class="desc">Full scan, 50 pages, 24h</div>
-                            </div>
-                            <div class="scan-type-card" data-type="aggressive" onclick="selectScanType('aggressive')">
-                                <div class="name">Aggressive</div>
-                                <div class="price">$49.99</div>
-                                <div class="desc">Comprehensive, 150 pages, 12h</div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Notes (Optional)</label>
-                            <textarea id="scanNotes" rows="4" placeholder="Any specific areas of concern..."></textarea>
-                        </div>
-                        
-                        <button class="btn btn-primary btn-block" onclick="submitScanRequest()">
-                            Request Scan →
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
+        function renderLogin() { return `<div class="auth-container"><div class="auth-card"><h1 style="font-size:2rem;margin-bottom:0.5rem;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🎯 Welcome Back</h1><p style="color:var(--text-muted);margin-bottom:2rem;">Sign in to your account</p><form id="loginForm"><div class="form-group"><label>Email</label><input type="email" id="loginEmail" required placeholder="you@example.com"></div><div class="form-group"><label>Password</label><input type="password" id="loginPassword" required placeholder="Enter password"></div><button type="submit" class="btn btn-primary btn-block">Sign In →</button></form><div class="auth-footer">No account? <a href="#" onclick="navigate('register');return false;">Sign up</a></div></div></div>`; }
         
-        function renderScansContent() {
-            return `
-                <div class="section">
-                    <div class="section-header">
-                        <h2>All Scans</h2>
-                        <button class="btn btn-primary" onclick="navigate('new-scan')">+ New Scan</button>
-                    </div>
-                    
-                    ${state.scans.length === 0 ? `
-                        <div class="empty-state">
-                            <div class="icon">📋</div>
-                            <h3>No scans</h3>
-                            <p>Your scan history will appear here</p>
-                        </div>
-                    ` : `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Target</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
-                                    <th>Payment</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${state.scans.map(scan => `
-                                    <tr>
-                                        <td><code>${scan.target}</code></td>
-                                        <td><span class="status-badge status-${scan.scan_type}">${scan.scan_type}</span></td>
-                                        <td><span class="status-badge status-${scan.status}">${scan.status}</span></td>
-                                        <td><span class="status-badge status-${scan.payment_status}">${scan.payment_status}</span></td>
-                                        <td>${new Date(scan.created_at).toLocaleDateString()}</td>
-                                        <td>
-                                            ${scan.status === 'completed' ? `
-                                                <button class="btn btn-secondary" onclick="downloadReport('${scan.id}')" style="padding: 0.35rem 0.75rem; font-size: 0.875rem;">
-                                                    📥 Report
-                                                </button>
-                                            ` : scan.payment_status === 'unpaid' ? `
-                                                <button class="btn btn-primary" onclick="checkout('${scan.id}')" style="padding: 0.35rem 0.75rem; font-size: 0.875rem;">
-                                                    💳 Pay
-                                                </button>
-                                            ` : '-'}
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `}
-                </div>
-            `;
-        }
+        function renderRegister() { return `<div class="auth-container"><div class="auth-card"><h1 style="font-size:2rem;margin-bottom:0.5rem;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🎯 Create Account</h1><p style="color:var(--text-muted);margin-bottom:2rem;">Start hunting bugs today</p><form id="registerForm"><div class="form-group"><label>Name</label><input type="text" id="regName" placeholder="John Doe"></div><div class="form-group"><label>Email</label><input type="email" id="regEmail" required placeholder="you@example.com"></div><div class="form-group"><label>Password</label><input type="password" id="regPassword" required placeholder="Min 6 chars"></div><button type="submit" class="btn btn-primary btn-block">Create Account →</button></form><div class="auth-footer">Have an account? <a href="#" onclick="navigate('login');return false;">Sign in</a></div></div></div>`; }
         
-        function renderBillingContent() {
-            const plans = state.plans.length > 0 ? state.plans : [
-                { id: 'free', name: 'Free', price: 0, scans_limit: 1, features: ['1 free scan', 'Basic scan', 'Markdown report'] },
-                { id: 'pro', name: 'Pro', price: 49, scans_limit: 10, features: ['10 scans/month', 'Full scan', 'HTML reports', 'AI analysis'], popular: true },
-                { id: 'enterprise', name: 'Enterprise', price: 199, scans_limit: -1, features: ['Unlimited scans', 'All features', 'Priority support', 'Custom reports'] },
-            ];
-            
-            return `
-                <div class="section">
-                    <h2 style="margin-bottom: 1.5rem;">Current Plan: <span class="plan-badge plan-${state.user.plan}">${state.user.plan}</span></h2>
-                    
-                    <div class="pricing-grid">
-                        ${plans.map(plan => `
-                            <div class="pricing-card ${plan.popular ? 'popular' : ''}">
-                                ${plan.popular ? '<div class="popular-badge">Most Popular</div>' : ''}
-                                <h3>${plan.name}</h3>
-                                <div class="price">$${plan.price}<span>/mo</span></div>
-                                <p style="color: var(--text-muted);">${plan.scans_limit === -1 ? 'Unlimited scans' : `${plan.scans_limit} scans/month`}</p>
-                                
-                                <ul class="features-list">
-                                    ${(plan.features || []).map(f => `<li>${f}</li>`).join('')}
-                                </ul>
-                                
-                                ${plan.id !== state.user.plan ? `
-                                    <button class="btn ${plan.popular ? 'btn-primary' : 'btn-secondary'} btn-block" 
-                                            onclick="upgradePlan('${plan.id}')">
-                                        Upgrade to ${plan.name}
-                                    </button>
-                                ` : `
-                                    <button class="btn btn-secondary btn-block" disabled>Current Plan</button>
-                                `}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
+        function renderDashboard() { const u = state.user; return `<div class="dashboard">${renderSidebar()}<div class="main-content">${renderHeader()}${state.currentRoute==='dashboard'?renderDashContent():''}${state.currentRoute==='new-scan'?renderNewScan():''}${state.currentRoute==='scans'?renderScans():''}${state.currentRoute==='billing'?renderBilling():''}${state.currentRoute==='checkout'?renderCheckout():''}</div></div>`; }
         
-        function renderCheckoutContent() {
-            const scan = state.pendingScan;
-            if (!scan) return '<p>No pending scan</p>';
-            
-            return `
-                <div class="section" style="max-width: 500px;">
-                    <h2 style="margin-bottom: 1.5rem;">💳 Checkout</h2>
-                    
-                    <div style="background: var(--darker); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                            <span style="color: var(--text-muted);">Scan Type</span>
-                            <span>Standard Scan</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                            <span style="color: var(--text-muted);">Target</span>
-                            <span>target.com</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid var(--border); font-weight: 700; font-size: 1.25rem;">
-                            <span>Total</span>
-                            <span>$${scan.amount.toFixed(2)}</span>
-                        </div>
-                    </div>
-                    
-                    <button class="btn btn-primary btn-block" onclick="checkout('${scan.scan_id}')">
-                        Pay $${scan.amount.toFixed(2)} →
-                    </button>
-                    
-                    <p style="text-align: center; margin-top: 1rem; color: var(--text-muted); font-size: 0.875rem;">
-                        🔒 Secure payment (demo mode - no actual charge)
-                    </p>
-                </div>
-            `;
-        }
+        function renderSidebar() { return `<aside class="sidebar"><div style="font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:2rem;">🎯 AI Bug Hunter</div><ul style="list-style:none;margin-bottom:2rem;"><li class="nav-link ${state.currentRoute==='dashboard'?'active':''}" onclick="navigate('dashboard')">📊 Dashboard</li><li class="nav-link ${state.currentRoute==='new-scan'?'active':''}" onclick="navigate('new-scan')">🎯 New Scan</li><li class="nav-link ${state.currentRoute==='scans'?'active':''}" onclick="navigate('scans')">📋 My Scans</li><li class="nav-link ${state.currentRoute==='billing'?'active':''}" onclick="navigate('billing')">💳 Billing</li></ul><div style="margin-top:auto;padding-top:2rem;border-top:1px solid var(--border);"><div style="color:var(--text-muted);font-size:0.875rem;margin-bottom:0.5rem;">${u.email}</div><button onclick="logout()" class="btn btn-secondary btn-block" style="font-size:0.875rem;">Sign Out</button></div></aside>`; }
         
-        // ===== Event Handlers =====
-        function attachEventListeners() {
-            // Login form
-            const loginForm = document.getElementById('loginForm');
-            if (loginForm) {
-                loginForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    login(
-                        document.getElementById('loginEmail').value,
-                        document.getElementById('loginPassword').value,
-                    );
-                });
-            }
-            
-            // Register form
-            const registerForm = document.getElementById('registerForm');
-            if (registerForm) {
-                registerForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    register(
-                        document.getElementById('regEmail').value,
-                        document.getElementById('regPassword').value,
-                        document.getElementById('regName').value,
-                    );
-                });
-            }
-        }
+        function renderHeader() { const u = state.user; return `<div class="header"><h1>${{dashboard:'Dashboard','new-scan':'New Scan',scans:'My Scans',billing:'Billing',checkout:'Checkout'}[state.currentRoute]||'Dashboard'}</h1><div style="display:flex;align-items:center;gap:1rem;"><span class="plan-badge plan-${u.plan}">${u.plan}</span><span style="color:var(--text-muted);">${u.name||u.email}</span></div></div>`; }
         
-        function selectScanType(type) {
-            document.querySelectorAll('.scan-type-card').forEach(card => {
-                card.classList.toggle('selected', card.dataset.type === type);
-            });
-        }
+        function renderDashContent() { const completed = state.scans.filter(s=>s.status==='completed').length; return `<div class="stats-grid"><div class="stat-card"><div class="stat-value">${state.scans.length}</div><div class="stat-label">Total Scans</div></div><div class="stat-card"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div><div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Vulns Found</div></div><div class="stat-card"><div class="stat-value">${u.scans_limit===-1?'∞':u.scans_limit-u.scans_used}</div><div class="stat-label">Scans Left</div></div></div><div class="section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><h2>Recent Scans</h2><button class="btn btn-primary" onclick="navigate('new-scan')">+ New Scan</button></div>${state.scans.length===0?`<div class="empty-state"><div class="icon">🎯</div><h3>No scans yet</h3><p>Request your first scan</p><button class="btn btn-primary" onclick="navigate('new-scan')">Request Scan</button></div>`:`<table><thead><tr><th>Target</th><th>Type</th><th>Status</th><th>Date</th></tr></thead><tbody>${state.scans.slice(0,5).map(s=>`<tr><td>${s.target}</td><td><span class="status-badge status-${s.scan_type}">${s.scan_type}</span></td><td><span class="status-badge status-${s.status}">${s.status}</span></td><td>${new Date(s.created_at).toLocaleDateString()}</td></tr>`).join('')}</tbody></table>`}</div>`; }
         
-        async function submitScanRequest() {
-            const target = document.getElementById('scanTarget').value;
-            const scanType = document.querySelector('.scan-type-card.selected')?.dataset.type || 'standard';
-            const notes = document.getElementById('scanNotes').value;
-            
-            if (!target) {
-                showAlert('Please enter a target URL', 'error');
-                return;
-            }
-            
-            await requestScan(target, scanType, notes);
-        }
+        function renderNewScan() { return `<div class="section"><div style="max-width:600px;"><div class="form-group"><label>Target URL</label><input type="url" id="scanTarget" required placeholder="https://target.com"></div><label>Scan Type</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;"><div class="scan-type-card" data-type="quick" onclick="selectType('quick')" style="background:var(--darker);border:2px solid var(--border);border-radius:12px;padding:1.5rem;cursor:pointer;text-align:center;"><div style="font-weight:600;">Quick</div><div style="font-size:1.5rem;font-weight:700;color:var(--primary);">$9.99</div><div style="color:var(--text-muted);font-size:0.875rem;">25 pages, 48h</div></div><div class="scan-type-card selected" data-type="standard" onclick="selectType('standard')" style="background:var(--darker);border:2px solid var(--primary);border-radius:12px;padding:1.5rem;cursor:pointer;text-align:center;"><div style="font-weight:600;">Standard</div><div style="font-size:1.5rem;font-weight:700;color:var(--primary);">$19.99</div><div style="color:var(--text-muted);font-size:0.875rem;">50 pages, 24h</div></div><div class="scan-type-card" data-type="aggressive" onclick="selectType('aggressive')" style="background:var(--darker);border:2px solid var(--border);border-radius:12px;padding:1.5rem;cursor:pointer;text-align:center;"><div style="font-weight:600;">Aggressive</div><div style="font-size:1.5rem;font-weight:700;color:var(--primary);">$49.99</div><div style="color:var(--text-muted);font-size:0.875rem;">150 pages, 12h</div></div></div><div class="form-group"><label>Notes (optional)</label><textarea id="scanNotes" rows="4" placeholder="Any specific areas..."></textarea></div><button class="btn btn-primary btn-block" onclick="submitScan()">Request Scan →</button></div></div>`; }
         
-        // ===== Initialize =====
-        async function init() {
-            if (isAuthenticated()) {
-                await Promise.all([fetchScans(), fetchPlans()]);
-            }
-            render();
-        }
+        function renderScans() { return `<div class="section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><h2>All Scans</h2><button class="btn btn-primary" onclick="navigate('new-scan')">+ New Scan</button></div>${state.scans.length===0?`<div class="empty-state"><div class="icon">📋</div><h3>No scans</h3></div>`:`<table><thead><tr><th>Target</th><th>Type</th><th>Status</th><th>Payment</th><th>Date</th><th></th></tr></thead><tbody>${state.scans.map(s=>`<tr><td><code>${s.target}</code></td><td><span class="status-badge status-${s.scan_type}">${s.scan_type}</span></td><td><span class="status-badge status-${s.status}">${s.status}</span></td><td><span class="status-badge status-${s.payment_status}">${s.payment_status}</span></td><td>${new Date(s.created_at).toLocaleDateString()}</td><td>${s.status==='completed'?`<button class="btn btn-secondary" onclick="downloadReport('${s.id}')" style="padding:0.35rem 0.75rem;font-size:0.875rem;">📥 Report</button>`:s.payment_status==='unpaid'?`<button class="btn btn-primary" onclick="checkout('${s.id}')" style="padding:0.35rem 0.75rem;font-size:0.875rem;">💳 Pay</button>`:'-'}</td></tr>`).join('')}</tbody></table>`}</div>`; }
         
+        function renderBilling() { const plans = state.plans.length>0?state.plans:[{id:'free',name:'Free',price:0,scans_limit:1,features:['1 free scan','Basic scan','Markdown report']},{id:'pro',name:'Pro',price:49,scans_limit:10,features:['10 scans/month','Full scan','HTML reports','AI analysis'],popular:true},{id:'enterprise',name:'Enterprise',price:199,scans_limit:-1,features:['Unlimited scans','All features','Priority support','Custom reports']}]; return `<div class="section"><h2 style="margin-bottom:1.5rem;">Current: <span class="plan-badge plan-${state.user.plan}">${state.user.plan}</span></h2><div class="pricing-grid">${plans.map(p=>`<div class="pricing-card ${p.popular?'popular':''}">${p.popular?'<div class="popular-badge">Popular</div>':''}<h3>${p.name}</h3><div class="price">$${p.price}<span>/mo</span></div><p style="color:var(--text-muted);">${p.scans_limit===-1?'Unlimited':`${p.scans_limit} scans/month`}</p><ul class="features-list">${(p.features||[]).map(f=>`<li>${f}</li>`).join('')}</ul>${p.id!==state.user.plan?`<button class="btn ${p.popular?'btn-primary':'btn-secondary'} btn-block" onclick="upgradePlan('${p.id}')">Upgrade</button>`:'<button class="btn btn-secondary btn-block" disabled>Current</button>'}</div>`).join('')}</div></div>`; }
+        
+        function renderCheckout() { const s = state.pendingScan; if (!s) return '<p>No pending scan</p>'; return `<div class="section" style="max-width:500px;"><h2 style="margin-bottom:1.5rem;">💳 Checkout</h2><div style="background:var(--darker);padding:1.5rem;border-radius:8px;margin-bottom:1.5rem;"><div style="display:flex;justify-content:space-between;margin-bottom:1rem;"><span style="color:var(--text-muted);">Type</span><span>Standard</span></div><div style="display:flex;justify-content:space-between;margin-bottom:1rem;"><span style="color:var(--text-muted);">Target</span><span>target.com</span></div><div style="display:flex;justify-content:space-between;padding-top:1rem;border-top:1px solid var(--border);font-weight:700;font-size:1.25rem;"><span>Total</span><span>$${s.amount.toFixed(2)}</span></div></div><button class="btn btn-primary btn-block" onclick="checkout('${s.scan_id}')">Pay $${s.amount.toFixed(2)} →</button><p style="text-align:center;margin-top:1rem;color:var(--text-muted);font-size:0.875rem;">🔒 Secure payment (demo mode)</p></div>`; }
+        
+        function selectType(t) { document.querySelectorAll('.scan-type-card').forEach(c=>c.style.borderColor = c.dataset.type===t?'var(--primary)':'var(--border)'); }
+        function submitScan() { const t = document.getElementById('scanTarget').value; const tp = document.querySelector('.scan-type-card[style*="primary"]')?.dataset.type || 'standard'; const n = document.getElementById('scanNotes').value; if (!t) { showAlert('Enter target URL', 'error'); return; } requestScan(t, tp, n); }
+        
+        function attachEvents() { const lf = document.getElementById('loginForm'); if (lf) lf.addEventListener('submit', e=>{e.preventDefault();login(document.getElementById('loginEmail').value,document.getElementById('loginPassword').value);}); const rf = document.getElementById('registerForm'); if (rf) rf.addEventListener('submit', e=>{e.preventDefault();register(document.getElementById('regEmail').value,document.getElementById('regPassword').value,document.getElementById('regName').value);}); }
+        
+        async function init() { if (isAuthenticated()) await Promise.all([fetchScans(), fetchPlans()]); render(); }
         init();
     </script>
 </body>
