@@ -1,10 +1,11 @@
 # Fly.io configuration for AI Bug Hunter Marketing Site
-# Deploy with: fly launch
+# Deploy with: fly deploy
 
 app = "aibughunter-marketing"
 primary_region = "sjc"  # San Jose (close to US West Coast)
 
 [build]
+  dockerfile = "Dockerfile.marketing"
 
 [env]
   PORT = "8080"
@@ -20,7 +21,3 @@ primary_region = "sjc"  # San Jose (close to US West Coast)
   memory = "512mb"
   cpu_kind = "shared"
   cpus = 1
-
-[[statics]]
-  guest_path = "/app/data"
-  url_path = "/data"
