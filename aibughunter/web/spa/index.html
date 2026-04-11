@@ -3,50 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Bug Hunter - Automated Bug Bounty Hunting</title>
+    <title>AI Bug Hunter - Kali Linux Style</title>
     <style>
         :root {
-            --bg-primary: #0a0e14;
-            --bg-secondary: #121820;
-            --bg-card: #161c24;
-            --bg-code: #0d1117;
-            --text-primary: #e6edf3;
-            --text-secondary: #8b949e;
-            --text-muted: #6e7681;
-            --accent: #58a6ff;
-            --accent-hover: #79c0ff;
-            --green: #3fb950;
-            --purple: #bc8cff;
-            --orange: #f0883e;
-            --red: #f85149;
-            --yellow: #d29922;
-            --border: #30363d;
-            --border-light: #21262d;
-            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-            --radius: 6px;
-            --radius-md: 12px;
-            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+            --kali-blue: #367bf0;
+            --kali-blue-hover: #4e8af7;
+            --kali-dark: #0a0e17;
+            --kali-panel: #111827;
+            --kali-border: #1e293b;
+            --kali-text: #e2e8f0;
+            --kali-muted: #64748b;
+            --kali-green: #22c55e;
+            --kali-red: #ef4444;
+            --kali-yellow: #eab308;
+            --kali-purple: #a855f7;
+            --kali-cyan: #06b6d4;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --radius: 4px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
+        
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         html { scroll-behavior: smooth; }
+        
         body {
             font-family: var(--font-sans);
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            background: var(--kali-dark);
+            color: var(--kali-text);
             line-height: 1.6;
-            font-size: 16px;
+            overflow-x: hidden;
         }
+        
+        /* Scanline effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(54, 123, 240, 0.03) 2px,
+                rgba(54, 123, 240, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
         .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
         
-        /* Nav */
+        /* Nav - Terminal Style */
         .nav {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(10, 14, 20, 0.95);
-            border-bottom: 1px solid var(--border-light);
-            padding: 1rem 2rem;
+            background: rgba(10, 14, 23, 0.98);
+            border-bottom: 1px solid var(--kali-border);
+            padding: 0.75rem 2rem;
             z-index: 100;
             backdrop-filter: blur(10px);
         }
@@ -58,264 +78,694 @@
             align-items: center;
         }
         .nav-logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            text-decoration: none;
-        }
-        .nav-logo span { background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-links { display: flex; gap: 1.5rem; align-items: center; list-style: none; }
-        .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
-        .nav-links a:hover { color: var(--text-primary); }
-        .nav-badge { font-size: 0.8rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.75rem; border-radius: 20px; border: 1px solid var(--border-light); }
-        
-        /* Hero */
-        .hero {
-            padding: 10rem 2rem 4rem;
-            text-align: center;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .hero h1 {
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-        }
-        .hero h1 span { background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero-subtitle { font-size: 1.25rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto 2.5rem; }
-        .hero-actions { display: flex; gap: 1rem; justify-content: center; margin-bottom: 3rem; }
-        
-        /* Code block */
-        .code-block {
-            background: var(--bg-code);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
             font-family: var(--font-mono);
-            font-size: 0.9rem;
-            text-align: left;
-            max-width: 700px;
-            margin: 0 auto 4rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--kali-text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .code-line { margin: 0.25rem 0; color: var(--text-secondary); }
-        .code-line .comment { color: var(--text-muted); }
-        .code-line .cmd { color: var(--green); }
-        .code-line .arg { color: var(--accent); }
-        .code-line .url { color: var(--orange); }
+        .nav-logo::before {
+            content: '⬢';
+            color: var(--kali-blue);
+            font-size: 1.25rem;
+        }
+        .nav-logo span { color: var(--kali-blue); }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; list-style: none; }
+        .nav-links a { 
+            color: var(--kali-muted); 
+            text-decoration: none; 
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            transition: color 0.2s; 
+        }
+        .nav-links a:hover { color: var(--kali-blue); }
+        .nav-badge { 
+            font-family: var(--font-mono);
+            font-size: 0.75rem; 
+            color: var(--kali-green); 
+            background: rgba(34, 197, 94, 0.1); 
+            padding: 0.25rem 0.75rem; 
+            border-radius: 2px; 
+            border: 1px solid rgba(34, 197, 94, 0.3); 
+        }
         
-        /* Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            max-width: 900px;
-            margin: 0 auto 6rem;
-            text-align: center;
-        }
-        .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); }
-        .stat-label { font-size: 0.875rem; color: var(--text-secondary); }
-        
-        /* Sections */
-        .section { padding: 4rem 2rem; text-align: center; }
-        .section-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-        }
-        .section-subtitle { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .section-desc { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto 3rem; }
-        
-        /* Feature cards */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            text-align: left;
-            transition: all 0.2s;
-        }
-        .feature-card:hover { border-color: var(--border); transform: translateY(-2px); box-shadow: var(--shadow); }
-        .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
-        .feature-card h3 { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.5rem; }
-        .feature-card p { color: var(--text-secondary); font-size: 0.95rem; }
-        
-        /* How it works */
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
+        /* Hero - Terminal Window */
+        .hero {
+            padding: 8rem 2rem 4rem;
             max-width: 1000px;
             margin: 0 auto;
         }
-        .step { text-align: left; }
-        .step-num {
-            display: inline-flex;
+        .hero-terminal {
+            background: var(--kali-panel);
+            border: 1px solid var(--kali-border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .terminal-header {
+            background: #1a2332;
+            padding: 0.75rem 1rem;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: var(--accent);
-            color: var(--bg-primary);
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--kali-border);
+        }
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
+        }
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--kali-muted);
+        }
+        .terminal-body {
+            padding: 2rem;
+            font-family: var(--font-mono);
+        }
+        .terminal-prompt {
+            color: var(--kali-green);
+        }
+        .terminal-prompt::before {
+            content: '┌──(root㉿kali)-[~/aibughunter]';
+            display: block;
+            color: var(--kali-muted);
+            margin-bottom: 0.25rem;
+        }
+        .terminal-prompt::after {
+            content: '└─#';
+            color: var(--kali-blue);
+        }
+        .terminal-command {
+            color: var(--kali-text);
+            margin-left: 0.5rem;
+        }
+        .terminal-command .cmd { color: var(--kali-blue); font-weight: 600; }
+        .terminal-command .arg { color: var(--kali-yellow); }
+        .terminal-command .url { color: var(--kali-cyan); text-decoration: underline; }
+        .terminal-output {
+            color: var(--kali-muted);
+            margin-top: 1.5rem;
+            line-height: 1.8;
+        }
+        .terminal-output .success { color: var(--kali-green); }
+        .terminal-output .warning { color: var(--kali-yellow); }
+        .terminal-output .error { color: var(--kali-red); }
+        .terminal-output .info { color: var(--kali-cyan); }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            max-width: 900px;
+            margin: 2rem auto 4rem;
+        }
+        .stat-box {
+            background: var(--kali-panel);
+            border: 1px solid var(--kali-border);
+            border-radius: 4px;
+            padding: 1.25rem;
+            text-align: center;
+            position: relative;
+        }
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--kali-blue), var(--kali-cyan));
+        }
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 2rem;
             font-weight: 700;
-            font-size: 1.1rem;
+            color: var(--kali-blue);
+        }
+        .stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--kali-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.25rem;
+        }
+        
+        /* Sections */
+        .section { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .section-tag {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--kali-green);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+        }
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .section-title span { color: var(--kali-blue); }
+        .section-desc {
+            color: var(--kali-muted);
+            font-size: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Feature Cards - Panel Style */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+        .feature-panel {
+            background: var(--kali-panel);
+            border: 1px solid var(--kali-border);
+            border-radius: 4px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+        .feature-panel:hover {
+            border-color: var(--kali-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(54, 123, 240, 0.1);
+        }
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             margin-bottom: 1rem;
         }
-        .step h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase; }
-        .step p { color: var(--text-secondary); font-size: 0.95rem; }
+        .feature-icon {
+            font-size: 1.5rem;
+        }
+        .feature-title {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--kali-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .feature-desc {
+            color: var(--kali-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
         
-        /* Pricing */
+        /* Steps - Terminal Workflow */
+        .steps-container {
+            background: var(--kali-panel);
+            border: 1px solid var(--kali-border);
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .step-row {
+            display: flex;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--kali-border);
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+        .step-row:last-child { border-bottom: none; }
+        .step-num {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--kali-panel);
+            background: var(--kali-blue);
+            width: 32px;
+            height: 32px;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .step-content h3 {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .step-content p {
+            color: var(--kali-muted);
+            font-size: 0.9rem;
+        }
+        .step-cmd {
+            font-family: var(--font-mono);
+            background: var(--kali-dark);
+            border: 1px solid var(--kali-border);
+            padding: 0.5rem 1rem;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .step-cmd .prompt { color: var(--kali-green); }
+        .step-cmd .cmd { color: var(--kali-blue); }
+        
+        /* Pricing - Tool Cards */
         .pricing-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
+            gap: 1rem;
             max-width: 1000px;
             margin: 0 auto;
         }
         .pricing-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-md);
+            background: var(--kali-panel);
+            border: 1px solid var(--kali-border);
+            border-radius: 4px;
             padding: 2rem;
-            text-align: left;
             position: relative;
         }
-        .pricing-card.popular { border-color: var(--accent); }
-        .popular-badge { position: absolute; top: -10px; right: 20px; background: var(--accent); color: var(--bg-primary); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
-        .pricing-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
-        .pricing-price { font-size: 2.5rem; font-weight: 700; margin: 1rem 0 0.5rem; }
-        .pricing-price span { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
-        .pricing-desc { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; }
-        .pricing-features { list-style: none; margin-bottom: 1.5rem; }
-        .pricing-features li { padding: 0.35rem 0; color: var(--text-secondary); font-size: 0.9rem; }
-        .pricing-features li::before { content: '✓ '; color: var(--green); }
+        .pricing-card.active {
+            border-color: var(--kali-blue);
+            box-shadow: 0 0 20px rgba(54, 123, 240, 0.15);
+        }
+        .pricing-badge {
+            position: absolute;
+            top: -8px;
+            right: 20px;
+            background: var(--kali-blue);
+            color: var(--kali-panel);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .pricing-header {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--kali-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+        .pricing-price {
+            font-family: var(--font-mono);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--kali-blue);
+            margin-bottom: 0.5rem;
+        }
+        .pricing-price span {
+            font-size: 1rem;
+            color: var(--kali-muted);
+            font-weight: 400;
+        }
+        .pricing-desc {
+            color: var(--kali-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+        .pricing-features li {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--kali-border);
+            color: var(--kali-text);
+        }
+        .pricing-features li::before {
+            content: '[+] ';
+            color: var(--kali-green);
+        }
         
         /* CTA */
-        .cta {
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--border-light);
+        .cta-section {
+            background: var(--kali-panel);
+            border-top: 1px solid var(--kali-border);
+            border-bottom: 1px solid var(--kali-border);
             padding: 4rem 2rem;
             text-align: center;
         }
-        .cta h2 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; }
-        .cta p { color: var(--text-secondary); margin-bottom: 2rem; }
-        .cta-actions { display: flex; gap: 1rem; justify-content: center; }
+        .cta-terminal {
+            background: var(--kali-dark);
+            border: 1px solid var(--kali-border);
+            border-radius: 4px;
+            padding: 1.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: left;
+            font-family: var(--font-mono);
+        }
+        .cta-prompt { color: var(--kali-green); }
+        .cta-cmd { color: var(--kali-text); }
+        .cta-cmd .cmd { color: var(--kali-blue); }
+        .cta-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
         
         /* Footer */
         .footer {
             padding: 2rem;
             text-align: center;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            border-top: 1px solid var(--border-light);
+            color: var(--kali-muted);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--kali-border);
         }
-        .footer a { color: var(--text-secondary); text-decoration: none; }
-        .footer a:hover { color: var(--text-primary); }
+        .footer a { color: var(--kali-blue); text-decoration: none; }
+        .footer a:hover { color: var(--kali-blue-hover); }
         
         /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
             padding: 0.75rem 1.5rem;
-            border-radius: var(--radius);
+            border-radius: 2px;
+            font-family: var(--font-mono);
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             text-decoration: none;
             cursor: pointer;
             border: none;
             transition: all 0.2s;
         }
-        .btn-primary { background: var(--accent); color: var(--bg-primary); }
-        .btn-primary:hover { background: var(--accent-hover); }
-        .btn-secondary { background: transparent; color: var(--text-primary); border: 1px solid var(--border); }
-        .btn-secondary:hover { border-color: var(--text-secondary); }
+        .btn-primary {
+            background: var(--kali-blue);
+            color: var(--kali-panel);
+        }
+        .btn-primary:hover { background: var(--kali-blue-hover); }
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--kali-border);
+            color: var(--kali-text);
+        }
+        .btn-secondary:hover { border-color: var(--kali-blue); }
         
-        /* Auth */
-        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 6rem 2rem 2rem; }
-        .auth-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 2.5rem; width: 100%; max-width: 400px; }
-        .auth-card h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .auth-card .subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
-        .form-group { margin-bottom: 1.25rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary); }
+        /* Auth - Terminal Style */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem 2rem 2rem;
+        }
+        .auth-terminal {
+            background: var(--kali-panel);
+            border: 1px solid var(--kali-border);
+            border-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: var(--shadow);
+        }
+        .auth-body {
+            padding: 2rem;
+        }
+        .auth-body h2 {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .auth-body .subtitle {
+            color: var(--kali-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--kali-green);
+        }
+        .form-group label::before {
+            content: '$ ';
+            color: var(--kali-blue);
+        }
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 0.75rem;
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            color: var(--text-primary);
-            font-size: 1rem;
+            background: var(--kali-dark);
+            border: 1px solid var(--kali-border);
+            border-radius: 2px;
+            color: var(--kali-text);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
         }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
-        .auth-footer { text-align: center; margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.9rem; }
-        .auth-footer a { color: var(--accent); text-decoration: none; }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--kali-blue);
+        }
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--kali-muted);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+        .auth-footer a { color: var(--kali-blue); text-decoration: none; }
         
-        /* Dashboard */
+        /* Dashboard - Panel Layout */
         .dashboard { display: flex; min-height: 100vh; }
-        .sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border-light); padding: 1.5rem; position: fixed; height: 100vh; top: 0; }
-        .main-content { flex: 1; margin-left: 240px; padding: 6rem 2rem 2rem; }
-        .nav-item { display: block; padding: 0.75rem 1rem; color: var(--text-secondary); text-decoration: none; cursor: pointer; border-radius: var(--radius); margin-bottom: 0.25rem; font-size: 0.9rem; }
-        .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
-        .nav-item.active { background: rgba(88, 166, 255, 0.1); color: var(--accent); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light); }
-        .header h1 { font-size: 1.5rem; }
-        .user-info { display: flex; align-items: center; gap: 1rem; font-size: 0.9rem; }
-        .plan-badge { background: var(--bg-card); border: 1px solid var(--border); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .sidebar {
+            width: 220px;
+            background: var(--kali-panel);
+            border-right: 1px solid var(--kali-border);
+            padding: 1rem;
+            position: fixed;
+            height: 100vh;
+            top: 0;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--kali-muted);
+            cursor: pointer;
+            border-radius: 2px;
+            margin-bottom: 0.25rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .sidebar-item:hover {
+            background: var(--kali-dark);
+            color: var(--kali-text);
+        }
+        .sidebar-item.active {
+            background: rgba(54, 123, 240, 0.1);
+            color: var(--kali-blue);
+            border-left: 2px solid var(--kali-blue);
+        }
+        .main-content {
+            flex: 1;
+            margin-left: 220px;
+            padding: 5rem 2rem 2rem;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--kali-border);
+        }
+        .top-bar h1 {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+        .plan-tag {
+            background: rgba(54, 123, 240, 0.1);
+            color: var(--kali-blue);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
         
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .stat-box { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1.25rem; }
-        .stat-box .value { font-size: 2rem; font-weight: 700; }
-        .stat-box .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--kali-panel);
+            border: 1px solid var(--kali-border);
+            border-radius: 4px;
+            padding: 1.25rem;
+            position: relative;
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+        }
+        .stat-card.blue::after { background: var(--kali-blue); }
+        .stat-card.green::after { background: var(--kali-green); }
+        .stat-card.red::after { background: var(--kali-red); }
+        .stat-card.yellow::after { background: var(--kali-yellow); }
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--kali-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
         
-        .content-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem; }
-        .content-card .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .content-card h2 { font-size: 1.1rem; }
+        /* Panel Cards */
+        .panel {
+            background: var(--kali-panel);
+            border: 1px solid var(--kali-border);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--kali-border);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+        }
+        .panel-body { padding: 1.25rem; }
         
+        /* Tables */
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border-light); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        td { padding: 0.75rem; border-bottom: 1px solid var(--border-light); font-size: 0.9rem; }
-        tr:hover td { background: var(--bg-secondary); }
-        code { font-family: var(--font-mono); background: var(--bg-code); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; }
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--kali-border);
+            color: var(--kali-muted);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--kali-border);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+        tr:hover td { background: rgba(54, 123, 240, 0.05); }
         
-        .status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
-        .status-pending { background: rgba(210, 153, 34, 0.1); color: var(--yellow); }
-        .status-completed { background: rgba(63, 185, 80, 0.1); color: var(--green); }
-        .status-paid { background: rgba(63, 185, 80, 0.1); color: var(--green); }
-        .status-unpaid { background: rgba(210, 153, 34, 0.1); color: var(--yellow); }
-        .status-queued { background: rgba(88, 166, 255, 0.1); color: var(--accent); }
+        /* Status Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 2px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-pending { background: rgba(234, 179, 8, 0.1); color: var(--kali-yellow); }
+        .badge-completed { background: rgba(34, 197, 94, 0.1); color: var(--kali-green); }
+        .badge-paid { background: rgba(34, 197, 94, 0.1); color: var(--kali-green); }
+        .badge-unpaid { background: rgba(239, 68, 68, 0.1); color: var(--kali-red); }
+        .badge-queued { background: rgba(54, 123, 240, 0.1); color: var(--kali-blue); }
         
-        .alert { padding: 1rem 1.5rem; border-radius: var(--radius); position: fixed; top: 80px; right: 20px; z-index: 200; max-width: 400px; }
-        .alert-success { background: rgba(63, 185, 80, 0.1); border: 1px solid var(--green); }
-        .alert-error { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--red); }
-        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
-        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 14, 20, 0.9); display: none; align-items: center; justify-content: center; z-index: 300; }
+        code {
+            font-family: var(--font-mono);
+            background: var(--kali-dark);
+            padding: 0.15rem 0.4rem;
+            border-radius: 2px;
+            font-size: 0.85rem;
+            color: var(--kali-cyan);
+        }
+        
+        /* Alerts & Loading */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 2px;
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 200;
+            max-width: 400px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+        .alert-success { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--kali-green); color: var(--kali-green); }
+        .alert-error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--kali-red); color: var(--kali-red); }
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 14, 23, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
         .loading-overlay.active { display: flex; }
-        .spinner { border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; width: 32px; height: 32px; animation: spin 0.8s linear infinite; }
+        .spinner {
+            border: 3px solid var(--kali-border);
+            border-top-color: var(--kali-blue);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 0.8s linear infinite;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
         
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--kali-muted);
+            font-family: var(--font-mono);
+        }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        
+        /* Responsive */
         @media (max-width: 768px) {
             .nav-links { display: none; }
-            .hero { padding: 8rem 1.5rem 3rem; }
-            .hero h1 { font-size: 1.75rem; }
-            .hero-actions { flex-direction: column; }
+            .hero { padding: 7rem 1rem 2rem; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
             .sidebar { display: none; }
             .main-content { margin-left: 0; }
-            .stats { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -327,109 +777,201 @@
         const API = window.location.origin;
         function isAuth() { return !!localStorage.getItem('token'); }
         let S = { token: localStorage.getItem('token'), user: JSON.parse(localStorage.getItem('user')||'null'), route: isAuth()?'dashboard':'landing', scans: [], plans: [], pending: null };
+        
         function showLoading(v) { document.getElementById('loading').classList.toggle('active', v); }
-        function alert(msg, type='success') { const a=document.createElement('div'); a.className=`alert alert-${type}`; a.textContent=msg; document.body.appendChild(a); setTimeout(()=>a.remove(),4000); }
+        function alert(msg, type='success') {
+            const a=document.createElement('div');
+            a.className=`alert alert-${type}`;
+            a.textContent=`${type==='success'?'[+]':'[-]'} ${msg}`;
+            document.body.appendChild(a);
+            setTimeout(()=>a.remove(),4000);
+        }
         function go(r) { S.route=r; render(); }
         
-        async function login(e,p) { showLoading(true); try { const r=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p})}); if(!r.ok)throw new Error((await r.json()).detail||'Failed'); const d=await r.json(); S.token=d.token; S.user=d.user; localStorage.setItem('token',d.token); localStorage.setItem('user',JSON.stringify(d.user)); go('dashboard'); }catch(err){alert(err.message,'error');}finally{showLoading(false);} }
-        async function register(e,p,n) { showLoading(true); try { const r=await fetch(`${API}/api/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p,name:n})}); if(!r.ok)throw new Error((await r.json()).detail||'Failed'); const d=await r.json(); S.token=d.token; S.user=d.user; localStorage.setItem('token',d.token); localStorage.setItem('user',JSON.stringify(d.user)); go('dashboard'); }catch(err){alert(err.message,'error');}finally{showLoading(false);} }
+        async function login(e,p) {
+            showLoading(true);
+            try {
+                const r=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p})});
+                if(!r.ok)throw new Error((await r.json()).detail||'Failed');
+                const d=await r.json();
+                S.token=d.token; S.user=d.user;
+                localStorage.setItem('token',d.token);
+                localStorage.setItem('user',JSON.stringify(d.user));
+                go('dashboard');
+            }catch(err){alert(err.message,'error');}finally{showLoading(false);}
+        }
+        
+        async function register(e,p,n) {
+            showLoading(true);
+            try {
+                const r=await fetch(`${API}/api/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p,name:n})});
+                if(!r.ok)throw new Error((await r.json()).detail||'Failed');
+                const d=await r.json();
+                S.token=d.token; S.user=d.user;
+                localStorage.setItem('token',d.token);
+                localStorage.setItem('user',JSON.stringify(d.user));
+                go('dashboard');
+            }catch(err){alert(err.message,'error');}finally{showLoading(false);}
+        }
+        
         function logout() { S.token=null; S.user=null; localStorage.removeItem('token'); localStorage.removeItem('user'); go('landing'); }
         
-        async function loadScans() { if(!S.token)return; const r=await fetch(`${API}/api/scans`,{headers:{'Authorization':`Bearer ${S.token}`}}); if(r.ok) S.scans=await r.json(); }
-        async function loadPlans() { const r=await fetch(`${API}/api/plans`); if(r.ok) S.plans=(await r.json()).plans; }
-        async function reqScan(target,type,notes) { showLoading(true); try { const r=await fetch(`${API}/api/scans`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.token}`},body:JSON.stringify({target,scan_type:type,notes})}); if(!r.ok)throw new Error((await r.json()).detail||'Failed'); const d=await r.json(); if(d.checkout_url){S.pending=d; go('checkout');}else{alert('Scan queued!'); go('scans');} }catch(err){alert(err.message,'error');}finally{showLoading(false);} }
-        async function checkout(id) { showLoading(true); try { const r=await fetch(`${API}/api/payments/checkout?scan_id=${id}`,{headers:{'Authorization':`Bearer ${S.token}`}}); const d=await r.json(); if(r.ok){alert('Payment successful!'); go('scans');}else throw new Error(d.detail||'Failed'); }catch(err){alert(err.message,'error');}finally{showLoading(false);} }
-        async function upgrade(plan) { showLoading(true); try { const r=await fetch(`${API}/api/plans/upgrade`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.token}`},body:JSON.stringify({plan})}); const d=await r.json(); if(r.ok){alert(`Upgraded to ${d.plan}!`); S.user.plan=d.plan; S.user.scans_limit=d.scans_limit; localStorage.setItem('user',JSON.stringify(S.user)); go('dashboard');}else throw new Error(d.detail||'Failed'); }catch(err){alert(err.message,'error');}finally{showLoading(false);} }
+        async function loadScans() {
+            if(!S.token)return;
+            const r=await fetch(`${API}/api/scans`,{headers:{'Authorization':`Bearer ${S.token}`}});
+            if(r.ok) S.scans=await r.json();
+        }
+        async function loadPlans() {
+            const r=await fetch(`${API}/api/plans`);
+            if(r.ok) S.plans=(await r.json()).plans;
+        }
+        async function reqScan(target,type,notes) {
+            showLoading(true);
+            try {
+                const r=await fetch(`${API}/api/scans`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.token}`},body:JSON.stringify({target,scan_type:type,notes})});
+                if(!r.ok)throw new Error((await r.json()).detail||'Failed');
+                const d=await r.json();
+                if(d.checkout_url){S.pending=d; go('checkout');}
+                else{alert('Scan queued!'); go('scans');}
+            }catch(err){alert(err.message,'error');}finally{showLoading(false);}
+        }
+        async function checkout(id) {
+            showLoading(true);
+            try {
+                const r=await fetch(`${API}/api/payments/checkout?scan_id=${id}`,{headers:{'Authorization':`Bearer ${S.token}`}});
+                const d=await r.json();
+                if(r.ok){alert('Payment successful!'); go('scans');}
+                else throw new Error(d.detail||'Failed');
+            }catch(err){alert(err.message,'error');}finally{showLoading(false);}
+        }
+        async function upgrade(plan) {
+            showLoading(true);
+            try {
+                const r=await fetch(`${API}/api/plans/upgrade`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.token}`},body:JSON.stringify({plan})});
+                const d=await r.json();
+                if(r.ok){alert(`Upgraded to ${d.plan}!`); S.user.plan=d.plan; S.user.scans_limit=d.scans_limit; localStorage.setItem('user',JSON.stringify(S.user)); go('dashboard');}
+                else throw new Error(d.detail||'Failed');
+            }catch(err){alert(err.message,'error');}finally{showLoading(false);}
+        }
         function dlReport(id) { window.open(`${API}/api/scans/${id}/report?authorization=Bearer ${S.token}`, '_blank'); }
         
         function render() { document.getElementById('app').innerHTML = !isAuth() ? (S.route==='login'?rLogin():S.route==='register'?rReg():rLanding()) : rDash(); attach(); }
         
         function rLanding() { return `
-            <nav class="nav"><div class="nav-inner"><a class="nav-logo" href="#">🎯 <span>AI Bug Hunter</span></a><ul class="nav-links"><li><a href="#features">Features</a></li><li><a href="#how">How It Works</a></li><li><a href="#pricing">Pricing</a></li><li><a href="https://github.com/Preshy/aibughunter">GitHub</a></li><li><a href="#" onclick="go('login');return false" class="btn btn-primary" style="padding:0.5rem 1rem;font-size:0.85rem;">Get Started</a></li></ul><span class="nav-badge">Automated Security Testing</span></div></nav>
+            <nav class="nav"><div class="nav-inner">
+                <a class="nav-logo" href="#">AI <span>Bug Hunter</span></a>
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#workflow">Workflow</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="https://github.com/Preshy/aibughunter">GitHub</a></li>
+                    <li><a href="#" onclick="go('login');return false" class="btn btn-primary" style="padding:0.5rem 1rem;font-size:0.8rem;">[ LOGIN ]</a></li>
+                </ul>
+                <span class="nav-badge">AUTOMATED SECURITY TESTING</span>
+            </div></nav>
             
             <section class="hero">
-                <h1>Find Bugs.<br><span>Get Paid.</span></h1>
-                <p class="hero-subtitle">Automated vulnerability scanning that discovers security flaws, generates professional reports, and helps you earn bug bounties.</p>
-                <div class="hero-actions">
-                    <a href="#" onclick="go('register');return false" class="btn btn-primary">⚡ Get Started Free</a>
-                    <a href="https://github.com/Preshy/aibughunter" class="btn btn-secondary">View on GitHub →</a>
+                <div class="hero-terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div>
+                        <div class="terminal-title">root@aibughunter:~</div>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="terminal-prompt"><span class="terminal-command"><span class="cmd">aibughunter</span> hunt <span class="url">https://target.com</span></span></div>
+                        <div class="terminal-output">
+                            <div>[+] Initializing AI-powered scanning engine...</div>
+                            <div>[+] Performing reconnaissance on target...</div>
+                            <div class="success">[✓] Found 19 vulnerabilities (12 HIGH severity)</div>
+                            <div class="success">[✓] Generated professional bug bounty report</div>
+                            <div>[+] Total scan time: 2.5 minutes</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="code-block">
-                    <div class="code-line"><span class="comment"># Install and scan in 2 lines</span></div>
-                    <div class="code-line"><span class="cmd">pip</span> install aibughunter</div>
-                    <div class="code-line"><span class="cmd">aibughunter</span> hunt <span class="url">https://target.com</span></div>
+                <div class="stats-bar">
+                    <div class="stat-box"><div class="stat-value">19</div><div class="stat-label">Vulns Found</div></div>
+                    <div class="stat-box"><div class="stat-value">12</div><div class="stat-label">High Severity</div></div>
+                    <div class="stat-box"><div class="stat-value">3</div><div class="stat-label">Sites Scanned</div></div>
+                    <div class="stat-box"><div class="stat-value">600+</div><div class="stat-label">Kali Tools</div></div>
                 </div>
-                <div class="stats">
-                    <div><div class="stat-value">19</div><div class="stat-label">Vulnerabilities Found</div></div>
-                    <div><div class="stat-value">12</div><div class="stat-label">High Severity</div></div>
-                    <div><div class="stat-value">3</div><div class="stat-label">Sites Scanned</div></div>
-                    <div><div class="stat-value">600+</div><div class="stat-label">Kali Tools</div></div>
+                <div style="text-align:center; display:flex; gap:1rem; justify-content:center;">
+                    <a href="#" onclick="go('register');return false" class="btn btn-primary">[ START HUNTING ]</a>
+                    <a href="https://github.com/Preshy/aibughunter" class="btn btn-secondary">[ VIEW ON GITHUB ]</a>
                 </div>
             </section>
             
             <section class="section" id="features">
-                <div class="section-title">Features</div>
-                <div class="section-subtitle">Everything you need to hunt bugs</div>
-                <p class="section-desc">From reconnaissance to report, fully automated.</p>
+                <div class="section-header">
+                    <div class="section-tag">CAPABILITIES</div>
+                    <div class="section-title">Arsenal of <span>Tools</span></div>
+                    <div class="section-desc">Everything you need for professional bug bounty hunting.</div>
+                </div>
                 <div class="features-grid">
-                    <div class="feature-card"><div class="feature-icon">🔍</div><h3>Automated Recon</h3><p>Subdomain enumeration, tech analysis, endpoint discovery powered by AI.</p></div>
-                    <div class="feature-card"><div class="feature-icon">🤖</div><h3>AI Analysis</h3><p>Qwen CLI identifies attack vectors and suggests the most profitable vulns to test.</p></div>
-                    <div class="feature-card"><div class="feature-icon">🛡️</div><h3>Vuln Scanning</h3><p>Automated XSS, SQLi, SSRF, IDOR, auth bypass testing across web apps and APIs.</p></div>
-                    <div class="feature-card"><div class="feature-icon">🐉</div><h3>600+ Kali Tools</h3><p>Direct integration with nmap, sqlmap, Metasploit, and more.</p></div>
-                    <div class="feature-card"><div class="feature-icon">📝</div><h3>Pro Reports</h3><p>Beautiful HTML/Markdown reports ready for HackerOne or Bugcrowd submission.</p></div>
-                    <div class="feature-card"><div class="feature-icon">🌐</div><h3>Web Dashboard</h3><p>Manage scans, track findings, and monitor your bug hunting progress.</p></div>
+                    <div class="feature-panel"><div class="feature-header"><span class="feature-icon">🔍</span><div class="feature-title">Automated Recon</div></div><div class="feature-desc">Subdomain enumeration, tech fingerprinting, endpoint discovery. Maps the entire attack surface automatically.</div></div>
+                    <div class="feature-panel"><div class="feature-header"><span class="feature-icon">🤖</span><div class="feature-title">AI Engine</div></div><div class="feature-desc">Qwen CLI analyzes targets, prioritizes attack vectors, and suggests the most profitable vulnerabilities to exploit.</div></div>
+                    <div class="feature-panel"><div class="feature-header"><span class="feature-icon">🛡️</span><div class="feature-title">Vuln Scanning</div></div><div class="feature-desc">Automated testing for XSS, SQLi, SSRF, IDOR, authentication bypass across web applications and APIs.</div></div>
+                    <div class="feature-panel"><div class="feature-header"><span class="feature-icon">🐉</span><div class="feature-title">Kali Integration</div></div><div class="feature-desc">Direct access to 600+ security tools. Run nmap, sqlmap, Metasploit, and more from one interface.</div></div>
+                    <div class="feature-panel"><div class="feature-header"><span class="feature-icon">📝</span><div class="feature-title">Pro Reports</div></div><div class="feature-desc">HTML and Markdown reports ready for submission to HackerOne, Bugcrowd, or direct to companies.</div></div>
+                    <div class="feature-panel"><div class="feature-header"><span class="feature-icon">🌐</span><div class="feature-title">Web Dashboard</div></div><div class="feature-desc">Manage scans, track findings, monitor progress. Beautiful Kali Linux-inspired interface.</div></div>
                 </div>
             </section>
             
-            <section class="section" id="how">
-                <div class="section-title">How It Works</div>
-                <div class="section-subtitle">Up and running in minutes</div>
-                <p class="section-desc">Four simple steps from target to payout.</p>
-                <div class="steps">
-                    <div class="step"><div class="step-num">1</div><h3>Submit Target</h3><p>Enter the URL or domain you want to test through the dashboard or CLI.</p></div>
-                    <div class="step"><div class="step-num">2</div><h3>AI Scans</h3><p>Comprehensive reconnaissance and automated vulnerability testing.</p></div>
-                    <div class="step"><div class="step-num">3</div><h3>Get Report</h3><p>Professional report with findings, POCs, and remediation advice.</p></div>
-                    <div class="step"><div class="step-num">4</div><h3>Submit & Earn</h3><p>Submit to bug bounty programs and get paid for discovered vulnerabilities.</p></div>
+            <section class="section" id="workflow">
+                <div class="section-header">
+                    <div class="section-tag">WORKFLOW</div>
+                    <div class="section-title">How It <span>Works</span></div>
+                    <div class="section-desc">From target submission to payout in four steps.</div>
+                </div>
+                <div class="steps-container">
+                    <div class="step-row"><div class="step-num">01</div><div class="step-content"><h3>Submit Target</h3><p>Enter the URL or domain through the dashboard or CLI.</p><div class="step-cmd"><span class="prompt">$</span> <span class="cmd">aibughunter</span> hunt https://target.com</div></div></div>
+                    <div class="step-row"><div class="step-num">02</div><div class="step-content"><h3>AI Scans</h3><p>Comprehensive reconnaissance and automated vulnerability testing.</p><div class="step-cmd"><span class="prompt">[+]</span> Found 56 endpoints, 3 subdomains</div></div></div>
+                    <div class="step-row"><div class="step-num">03</div><div class="step-content"><h3>Get Report</h3><p>Professional report with findings, POCs, and remediation advice.</p><div class="step-cmd"><span class="prompt">[✓]</span> Report: report_20240411.html</div></div></div>
+                    <div class="step-row"><div class="step-num">04</div><div class="step-content"><h3>Submit & Earn</h3><p>Submit to bug bounty programs and get paid for discovered vulnerabilities.</p><div class="step-cmd"><span class="prompt">[$]</span> Bounty: $500 - $15,000+</div></div></div>
                 </div>
             </section>
             
             <section class="section" id="pricing">
-                <div class="section-title">Pricing</div>
-                <div class="section-subtitle">Choose your plan</div>
-                <p class="section-desc">Start free, scale as you grow.</p>
+                <div class="section-header">
+                    <div class="section-tag">ACCESS LEVELS</div>
+                    <div class="section-title">Choose Your <span>Plan</span></div>
+                    <div class="section-desc">Start free, scale as your bug hunting grows.</div>
+                </div>
                 <div class="pricing-grid">
-                    <div class="pricing-card"><h3>Free</h3><div class="pricing-price">$0</div><div class="pricing-desc">1 scan included</div><ul class="pricing-features"><li>Basic vulnerability scan</li><li>Up to 25 pages crawled</li><li>Markdown report</li><li>48-hour turnaround</li></ul><a href="#" onclick="go('register');return false" class="btn btn-secondary" style="width:100%;justify-content:center;">Start Free</a></div>
-                    <div class="pricing-card popular"><div class="popular-badge">Popular</div><h3>Pro</h3><div class="pricing-price">$49<span>/mo</span></div><div class="pricing-desc">10 scans/month</div><ul class="pricing-features"><li>Full vulnerability scan</li><li>Up to 50 pages crawled</li><li>HTML + Markdown reports</li><li>AI-powered analysis</li><li>24-hour turnaround</li><li>Priority support</li></ul><a href="#" onclick="go('register');return false" class="btn btn-primary" style="width:100%;justify-content:center;">Get Pro</a></div>
-                    <div class="pricing-card"><h3>Enterprise</h3><div class="pricing-price">$199<span>/mo</span></div><div class="pricing-desc">Unlimited scans</div><ul class="pricing-features"><li>Everything in Pro</li><li>Kali Linux tools integration</li><li>Exploitation testing</li><li>Custom POC generation</li><li>12-hour turnaround</li><li>Dedicated support</li></ul><a href="#" onclick="go('register');return false" class="btn btn-secondary" style="width:100%;justify-content:center;">Contact Sales</a></div>
+                    <div class="pricing-card"><div class="pricing-header">Free Tier</div><div class="pricing-price">$0</div><div class="pricing-desc">1 scan included. Perfect for testing.</div><ul class="pricing-features"><li>Basic vulnerability scan</li><li>Up to 25 pages crawled</li><li>Markdown report</li><li>48-hour turnaround</li></ul><a href="#" onclick="go('register');return false" class="btn btn-secondary" style="width:100%;">[ ACTIVATE ]</a></div>
+                    <div class="pricing-card active"><div class="pricing-badge">RECOMMENDED</div><div class="pricing-header">Pro Access</div><div class="pricing-price">$49<span>/mo</span></div><div class="pricing-desc">10 scans/month. For serious hunters.</div><ul class="pricing-features"><li>Full vulnerability scan</li><li>Up to 50 pages crawled</li><li>HTML + Markdown reports</li><li>AI-powered analysis</li><li>24-hour turnaround</li><li>Priority support</li></ul><a href="#" onclick="go('register');return false" class="btn btn-primary" style="width:100%;">[ UPGRADE ]</a></div>
+                    <div class="pricing-card"><div class="pricing-header">Enterprise</div><div class="pricing-price">$199<span>/mo</span></div><div class="pricing-desc">Unlimited scans. For teams.</div><ul class="pricing-features"><li>Everything in Pro</li><li>Kali Linux tools integration</li><li>Exploitation testing</li><li>Custom POC generation</li><li>12-hour turnaround</li><li>Dedicated support</li></ul><a href="#" onclick="go('register');return false" class="btn btn-secondary" style="width:100%;">[ CONTACT ]</a></div>
                 </div>
             </section>
             
-            <section class="cta">
-                <h2>⚡ READY FOR BUG BOUNTY HUNTING?</h2>
-                <p>Automated scanning, AI-powered analysis, and professional reports. Get started in under 2 minutes.</p>
+            <section class="cta-section">
+                <div class="section-tag">READY?</div>
+                <div class="section-title" style="margin-bottom:1rem;">Initialize <span>Bug Hunting</span></div>
+                <div class="cta-terminal">
+                    <div><span class="cta-prompt">$ </span><span class="cta-cmd"><span class="cmd">pip</span> install aibughunter</span></div>
+                    <div><span class="cta-prompt">$ </span><span class="cta-cmd"><span class="cmd">aibughunter</span> hunt <span style="color:var(--kali-cyan);">https://target.com</span></span></div>
+                </div>
                 <div class="cta-actions">
-                    <a href="#" onclick="go('register');return false" class="btn btn-primary">⚡ Get Started Free</a>
-                    <a href="https://github.com/Preshy/aibughunter" class="btn btn-secondary">Read the Docs →</a>
+                    <a href="#" onclick="go('register');return false" class="btn btn-primary">[ START FREE ]</a>
+                    <a href="https://github.com/Preshy/aibughunter" class="btn btn-secondary">[ DOCUMENTATION ]</a>
                 </div>
             </section>
             
-            <footer class="footer"><p>Built with ⚡ by Preshy · <a href="https://github.com/Preshy/aibughunter">GitHub</a> · <a href="https://aibughunter-marketing.fly.dev">Live Demo</a></p></footer>
+            <footer class="footer">Built with ⚡ by Preshy · <a href="https://github.com/Preshy/aibughunter">GitHub</a> · <a href="https://aibughunter-marketing.fly.dev">Live Demo</a></footer>
         `; }
         
-        function rLogin() { return `<nav class="nav"><div class="nav-inner"><a class="nav-logo" href="#" onclick="go('landing');return false">🎯 <span>AI Bug Hunter</span></a></div></nav><div class="auth-container"><div class="auth-card"><h2>Sign In</h2><p class="subtitle">Welcome back</p><form id="lf"><div class="form-group"><label>Email</label><input type="email" id="le" required></div><div class="form-group"><label>Password</label><input type="password" id="lp" required></div><button class="btn btn-primary" style="width:100%;justify-content:center;">Sign In →</button></form><div class="auth-footer">No account? <a href="#" onclick="go('register');return false">Create one</a></div></div></div>`; }
-        function rReg() { return `<nav class="nav"><div class="nav-inner"><a class="nav-logo" href="#" onclick="go('landing');return false">🎯 <span>AI Bug Hunter</span></a></div></nav><div class="auth-container"><div class="auth-card"><h2>Create Account</h2><p class="subtitle">Start hunting bugs</p><form id="rf"><div class="form-group"><label>Name</label><input type="text" id="rn"></div><div class="form-group"><label>Email</label><input type="email" id="re" required></div><div class="form-group"><label>Password</label><input type="password" id="rp" required></div><button class="btn btn-primary" style="width:100%;justify-content:center;">Create Account →</button></form><div class="auth-footer">Have an account? <a href="#" onclick="go('login');return false">Sign in</a></div></div></div>`; }
+        function rLogin() { return `<nav class="nav"><div class="nav-inner"><a class="nav-logo" href="#" onclick="go('landing');return false">AI <span>Bug Hunter</span></a></div></nav><div class="auth-container"><div class="auth-terminal"><div class="terminal-header"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div><div class="terminal-title">authentication</div></div><div class="auth-body"><h2>>_ Sign In</h2><p class="subtitle">Access your hunting dashboard</p><form id="lf"><div class="form-group"><label>email</label><input type="email" id="le" required placeholder="hunter@example.com"></div><div class="form-group"><label>password</label><input type="password" id="lp" required placeholder="••••••••"></div><button class="btn btn-primary" style="width:100%;">[ AUTHENTICATE ]</button></form><div class="auth-footer">No access? <a href="#" onclick="go('register');return false">Create account</a></div></div></div></div>`; }
+        function rReg() { return `<nav class="nav"><div class="nav-inner"><a class="nav-logo" href="#" onclick="go('landing');return false">AI <span>Bug Hunter</span></a></div></nav><div class="auth-container"><div class="auth-terminal"><div class="terminal-header"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div><div class="terminal-title">registration</div></div><div class="auth-body"><h2>>_ New Account</h2><p class="subtitle">Initialize your hunting profile</p><form id="rf"><div class="form-group"><label>callsign</label><input type="text" id="rn" placeholder="Hunter"></div><div class="form-group"><label>email</label><input type="email" id="re" required placeholder="hunter@example.com"></div><div class="form-group"><label>password</label><input type="password" id="rp" required placeholder="Min 6 chars"></div><button class="btn btn-primary" style="width:100%;">[ INITIALIZE ]</button></form><div class="auth-footer">Have access? <a href="#" onclick="go('login');return false">Sign in</a></div></div></div></div>`; }
         
         function rDash() { const u=S.user||{}; return `
-            <nav class="nav"><div class="nav-inner"><a class="nav-logo" href="#">🎯 <span>AI Bug Hunter</span></a><div style="display:flex;gap:1rem;align-items:center;"><span class="plan-badge">${u.plan||'free'}</span><span style="font-size:0.9rem;color:var(--text-secondary);">${u.email||'User'}</span><button class="btn btn-secondary" onclick="logout()" style="padding:0.4rem 0.8rem;font-size:0.8rem;">Sign Out</button></div></div></nav>
+            <nav class="nav"><div class="nav-inner"><a class="nav-logo" href="#">AI <span>Bug Hunter</span></a><div class="user-info"><span class="plan-tag">${u.plan||'free'}</span><span>${u.email||'root'}</span><button class="btn btn-secondary" onclick="logout()" style="padding:0.4rem 0.8rem;font-size:0.75rem;">[ EXIT ]</button></div></div></nav>
             <div class="dashboard">
                 <aside class="sidebar">
-                    <div class="nav-item ${S.route==='dashboard'?'active':''}" onclick="go('dashboard')">📊 Dashboard</div>
-                    <div class="nav-item ${S.route==='new-scan'?'active':''}" onclick="go('new-scan')">🎯 New Scan</div>
-                    <div class="nav-item ${S.route==='scans'?'active':''}" onclick="go('scans')">📋 My Scans</div>
-                    <div class="nav-item ${S.route==='billing'?'active':''}" onclick="go('billing')">💳 Billing</div>
+                    <div class="sidebar-item ${S.route==='dashboard'?'active':''}" onclick="go('dashboard')">📊 DASHBOARD</div>
+                    <div class="sidebar-item ${S.route==='new-scan'?'active':''}" onclick="go('new-scan')">🎯 NEW SCAN</div>
+                    <div class="sidebar-item ${S.route==='scans'?'active':''}" onclick="go('scans')">📋 MY SCANS</div>
+                    <div class="sidebar-item ${S.route==='billing'?'active':''}" onclick="go('billing')">💳 ACCESS LEVELS</div>
                 </aside>
                 <div class="main-content">
-                    <div class="header"><h1>${{dashboard:'Dashboard','new-scan':'New Scan',scans:'My Scans',billing:'Billing',checkout:'Checkout'}[S.route]||'Dashboard'}</h1></div>
+                    <div class="top-bar"><h1>>_ ${{dashboard:'DASHBOARD','new-scan':'NEW SCAN',scans:'MY SCANS',billing:'ACCESS LEVELS',checkout:'CHECKOUT'}[S.route]||'DASHBOARD'}</h1></div>
                     ${S.route==='dashboard'?rDashC():''}${S.route==='new-scan'?rNewScan():''}${S.route==='scans'?rScans():''}${S.route==='billing'?rBill():''}${S.route==='checkout'?rCheckout():''}
                 </div>
             </div>
@@ -437,27 +979,28 @@
         
         function rDashC() { const u=S.user||{}; const c=S.scans.filter(s=>s.status==='completed').length; return `
             <div class="stats-row">
-                <div class="stat-box"><div class="value">${S.scans.length}</div><div class="label">Total Scans</div></div>
-                <div class="stat-box"><div class="value">${c}</div><div class="label">Completed</div></div>
-                <div class="stat-box"><div class="value">0</div><div class="label">Vulns Found</div></div>
-                <div class="stat-box"><div class="value">${u.scans_limit===-1?'∞':(u.scans_limit||1)-(u.scans_used||0)}</div><div class="label">Scans Left</div></div>
+                <div class="stat-card blue"><div class="stat-value">${S.scans.length}</div><div class="stat-label">Total Scans</div></div>
+                <div class="stat-card green"><div class="stat-value">${c}</div><div class="stat-label">Completed</div></div>
+                <div class="stat-card red"><div class="stat-value">0</div><div class="stat-label">Vulns Found</div></div>
+                <div class="stat-card yellow"><div class="stat-value">${u.scans_limit===-1?'∞':(u.scans_limit||1)-(u.scans_used||0)}</div><div class="stat-label">Scans Left</div></div>
             </div>
-            <div class="content-card">
-                <div class="card-header"><h2>Recent Scans</h2><button class="btn btn-primary" onclick="go('new-scan')" style="padding:0.5rem 1rem;font-size:0.85rem;">+ New Scan</button></div>
-                ${S.scans.length===0?`<div class="empty-state"><div class="icon">🎯</div><p>No scans yet. Request your first scan.</p></div>`:`<table><thead><tr><th>Target</th><th>Type</th><th>Status</th><th>Date</th></tr></thead><tbody>${S.scans.slice(0,5).map(s=>`<tr><td><code>${s.target}</code></td><td>${s.scan_type}</td><td><span class="status status-${s.status}">${s.status}</span></td><td>${new Date(s.created_at).toLocaleDateString()}</td></tr>`).join('')}</tbody></table>`}
+            <div class="panel">
+                <div class="panel-header"><span>[ SCAN LOG ]</span><button class="btn btn-primary" onclick="go('new-scan')" style="padding:0.4rem 0.8rem;font-size:0.75rem;">[ + NEW ]</button></div>
+                <div class="panel-body">
+                    ${S.scans.length===0?`<div class="empty-state"><div class="icon">🎯</div><div>No active scans. Initialize your first hunt.</div></div>`:`<table><thead><tr><th>TARGET</th><th>TYPE</th><th>STATUS</th><th>TIMESTAMP</th></tr></thead><tbody>${S.scans.slice(0,5).map(s=>`<tr><td><code>${s.target}</code></td><td>${s.scan_type}</td><td><span class="badge badge-${s.status}">${s.status}</span></td><td>${new Date(s.created_at).toLocaleDateString()}</td></tr>`).join('')}</tbody></table>`}
+                </div>
             </div>
         `; }
         
-        function rNewScan() { return `<div class="content-card"><div style="max-width:500px;"><div class="form-group"><label>Target URL</label><input type="url" id="st" placeholder="https://target.com"></div><div class="form-group"><label>Scan Type</label><select id="stype"><option value="quick">Quick ($9.99)</option><option value="standard" selected>Standard ($19.99)</option><option value="aggressive">Aggressive ($49.99)</option></select></div><div class="form-group"><label>Notes</label><textarea id="snotes" rows="3" placeholder="Any specific areas..."></textarea></div><button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitScan()">Request Scan →</button></div></div>`; }
+        function rNewScan() { return `<div class="panel"><div class="panel-header"><span>[ INITIALIZE SCAN ]</span></div><div class="panel-body"><div style="max-width:500px;"><div class="form-group"><label>target_url</label><input type="url" id="st" placeholder="https://target.com"></div><div class="form-group"><label>scan_profile</label><select id="stype"><option value="quick">QUICK ($9.99) - 25 pages, 48h</option><option value="standard" selected>STANDARD ($19.99) - 50 pages, 24h</option><option value="aggressive">AGGRESSIVE ($49.99) - 150 pages, 12h</option></select></div><div class="form-group"><label>notes</label><textarea id="snotes" rows="3" placeholder="Specific areas of interest..."></textarea></div><button class="btn btn-primary" style="width:100%;" onclick="submitScan()">[ LAUNCH SCAN ]</button></div></div></div>`; }
         
-        function rScans() { return `<div class="content-card">${S.scans.length===0?`<div class="empty-state"><div class="icon">📋</div><p>No scans yet.</p></div>`:`<table><thead><tr><th>Target</th><th>Type</th><th>Status</th><th>Payment</th><th>Date</th><th></th></tr></thead><tbody>${S.scans.map(s=>`<tr><td><code>${s.target}</code></td><td>${s.scan_type}</td><td><span class="status status-${s.status}">${s.status}</span></td><td><span class="status status-${s.payment_status}">${s.payment_status}</span></td><td>${new Date(s.created_at).toLocaleDateString()}</td><td>${s.status==='completed'?`<button class="btn btn-secondary" onclick="dlReport('${s.id}')" style="padding:0.3rem 0.6rem;font-size:0.8rem;">📥 Report</button>`:s.payment_status==='unpaid'?`<button class="btn btn-primary" onclick="checkout('${s.id}')" style="padding:0.3rem 0.6rem;font-size:0.8rem;">💳 Pay</button>`:''}</td></tr>`).join('')}</tbody></table>`}</div>`; }
+        function rScans() { return `<div class="panel"><div class="panel-header"><span>[ SCAN HISTORY ]</span><button class="btn btn-primary" onclick="go('new-scan')" style="padding:0.4rem 0.8rem;font-size:0.75rem;">[ + NEW ]</button></div><div class="panel-body">${S.scans.length===0?`<div class="empty-state"><div class="icon">📋</div><div>No scans in log.</div></div>`:`<table><thead><tr><th>TARGET</th><th>PROFILE</th><th>STATUS</th><th>PAYMENT</th><th>TIMESTAMP</th><th>ACTION</th></tr></thead><tbody>${S.scans.map(s=>`<tr><td><code>${s.target}</code></td><td>${s.scan_type}</td><td><span class="badge badge-${s.status}">${s.status}</span></td><td><span class="badge badge-${s.payment_status}">${s.payment_status}</span></td><td>${new Date(s.created_at).toLocaleDateString()}</td><td>${s.status==='completed'?`<button class="btn btn-secondary" onclick="dlReport('${s.id}')" style="padding:0.3rem 0.6rem;font-size:0.75rem;">📥 REPORT</button>`:s.payment_status==='unpaid'?`<button class="btn btn-primary" onclick="checkout('${s.id}')" style="padding:0.3rem 0.6rem;font-size:0.75rem;">💳 PAY</button>`:'-'}</td></tr>`).join('')}</tbody></table>`}</div></div>`; }
         
-        function rBill() { const pl=S.plans.length?S.plans:[{id:'free',name:'Free',price:0,scans_limit:1,features:['1 free scan']},{id:'pro',name:'Pro',price:49,scans_limit:10,features:['10 scans/month','Full scans','HTML reports'],popular:true},{id:'enterprise',name:'Enterprise',price:199,scans_limit:-1,features:['Unlimited scans','All features','Priority support']}]; return `<div class="pricing-grid">${pl.map(p=>`<div class="pricing-card ${p.popular?'popular':''}">${p.popular?'<div class="popular-badge">Popular</div>':''}<h3>${p.name}</h3><div class="pricing-price">$${p.price}<span>/mo</span></div><div class="pricing-desc">${p.scans_limit===-1?'Unlimited':`${p.scans_limit} scans/month`}</div><ul class="pricing-features">${(p.features||[]).map(f=>`<li>${f}</li>`).join('')}</ul>${p.id!==(S.user?.plan||'free')?`<button class="btn ${p.popular?'btn-primary':'btn-secondary'}" style="width:100%;justify-content:center;" onclick="upgrade('${p.id}')">Upgrade</button>`:'<button class="btn btn-secondary" style="width:100%;justify-content:center;" disabled>Current</button>'}</div>`).join('')}</div>`; }
+        function rBill() { const pl=S.plans.length?S.plans:[{id:'free',name:'Free',price:0,scans_limit:1,features:['1 free scan']},{id:'pro',name:'Pro',price:49,scans_limit:10,features:['10 scans/month','Full scans','HTML reports'],popular:true},{id:'enterprise',name:'Enterprise',price:199,scans_limit:-1,features:['Unlimited scans','All features','Priority support']}]; return `<div class="pricing-grid">${pl.map(p=>`<div class="pricing-card ${p.popular?'active':''}">${p.popular?'<div class="pricing-badge">RECOMMENDED</div>':''}<div class="pricing-header">${p.name}</div><div class="pricing-price">$${p.price}<span>/mo</span></div><div class="pricing-desc">${p.scans_limit===-1?'Unlimited':`${p.scans_limit} scans/month`}</div><ul class="pricing-features">${(p.features||[]).map(f=>`<li>${f}</li>`).join('')}</ul>${p.id!==(S.user?.plan||'free')?`<button class="btn ${p.popular?'btn-primary':'btn-secondary'}" style="width:100%;" onclick="upgrade('${p.id}')">[ UPGRADE ]</button>`:'<button class="btn btn-secondary" style="width:100%;" disabled>[ ACTIVE ]</button>'}</div>`).join('')}</div>`; }
         
-        function rCheckout() { const s=S.pending; if(!s)return'<div class="content-card"><p>No pending scan</p></div>'; return `<div class="content-card" style="max-width:400px;"><h2 style="margin-bottom:1rem;">💳 Checkout</h2><div style="background:var(--bg-primary);padding:1rem;border-radius:var(--radius);margin-bottom:1rem;"><div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;"><span style="color:var(--text-muted);">Type</span><span>Standard Scan</span></div><div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.25rem;"><span>Total</span><span>$${s.amount?.toFixed(2)||'19.99'}</span></div></div><button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="checkout('${s.scan_id}')">Pay →</button><p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--text-muted);">Demo mode — no actual charge</p></div>`; }
+        function rCheckout() { const s=S.pending; if(!s)return'<div class="panel"><div class="panel-body"><p>No pending scan</p></div></div>'; return `<div class="panel" style="max-width:400px;"><div class="panel-header"><span>[ CHECKOUT ]</span></div><div class="panel-body"><div style="background:var(--kali-dark);padding:1rem;border-radius:2px;margin-bottom:1rem;font-family:var(--font-mono);"><div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;"><span style="color:var(--kali-muted);">TYPE</span><span>STANDARD SCAN</span></div><div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.25rem;"><span>TOTAL</span><span style="color:var(--kali-blue);">$${s.amount?.toFixed(2)||'19.99'}</span></div></div><button class="btn btn-primary" style="width:100%;" onclick="checkout('${s.scan_id}')">[ PROCESS PAYMENT ]</button><p style="text-align:center;margin-top:1rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--kali-muted);">[DEMO MODE — NO ACTUAL CHARGE]</p></div></div>`; }
         
-        function submitScan() { const t=document.getElementById('st')?.value; const tp=document.getElementById('stype')?.value||'standard'; const n=document.getElementById('snotes')?.value; if(!t){alert('Enter target','error');return;} reqScan(t,tp,n); }
-        function selectType(t) {}
+        function submitScan() { const t=document.getElementById('st')?.value; const tp=document.getElementById('stype')?.value||'standard'; const n=document.getElementById('snotes')?.value; if(!t){alert('TARGET URL required','error');return;} reqScan(t,tp,n); }
         
         function attach() { const lf=document.getElementById('lf'); if(lf)lf.onsubmit=e=>{e.preventDefault();login(document.getElementById('le').value,document.getElementById('lp').value);}; const rf=document.getElementById('rf'); if(rf)rf.onsubmit=e=>{e.preventDefault();register(document.getElementById('re').value,document.getElementById('rp').value,document.getElementById('rn').value);}; }
         
