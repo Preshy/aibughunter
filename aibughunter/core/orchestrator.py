@@ -15,7 +15,6 @@ from aibughunter.config.manager import ConfigManager
 from aibughunter.core.scope import ScopeManager
 from aibughunter.core.database import Database
 from aibughunter.scanners.recon_scanner import ReconScanner
-from aibughunter.scanners.dork_finder import GoogleDorkFinder
 from aibughunter.scanners.web_scanner import WebVulnerabilityScanner
 from aibughunter.scanners.exploit_module import ExploitModule
 from aibughunter.tools.manager import ToolManager
@@ -69,18 +68,15 @@ class BugHuntOrchestrator:
             
             # Phase 2: Reconnaissance
             recon_data = await self._phase_recon(target)
-            
-            # Phase 3: AI Analysis & Planning
-            attack_plan = await self._phase_plan(recon_data)
-            
-            # Phase 4: Vulnerability Scanning
+
+            # Phase 3: Vulnerability Scanning
             findings = await self._phase_scan(target, recon_data)
-            
-            # Phase 5: Exploitation (if enabled)
+
+            # Phase 4: Exploitation (if enabled)
             if self.auto_exploit:
                 await self._phase_exploit(findings)
-            
-            # Phase 6: Report Generation
+
+            # Phase 5: Report Generation
             if self.generate_report:
                 await self._phase_report(findings)
             
@@ -177,34 +173,6 @@ class BugHuntOrchestrator:
             except Exception as e:
                 console.print(f"[yellow]⚠ Endpoint discovery failed: {e}[/yellow]")
                 progress.update(task, description="✗ Endpoint discovery failed")
-
-        # Google Dork discovery
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task("Running Google Dork discovery...", total=None)
-            try:
-                dork_finder = GoogleDorkFinder(
-                    output_dir=str(self.output_dir / "recon" / "dorks"),
-                )
-                dork_results = await dork_finder.search(
-                    categories=["exposed_panels", "config_files", "api_endpoints", "error_pages"],
-                    target=target,
-                    max_results=50,
-                    save_results=True,
-                )
-                recon_data["dork_results"] = [
-                    {"url": r.url, "severity": r.severity_potential, "category": r.category}
-                    for r in dork_results[:20]  # Top 20 results
-                ]
-                progress.update(task, description=f"✓ Found {len(dork_results)} dork results")
-                await dork_finder.close()
-            except Exception as e:
-                console.print(f"[yellow]⚠ Dork discovery failed: {e}[/yellow]")
-                recon_data["dork_results"] = []
-                progress.update(task, description="✗ Dork discovery failed")
 
         # AI-powered recon analysis
         console.print("[blue]🤖 AI analyzing recon data...[/blue]")
