@@ -429,7 +429,7 @@
                     <div class="nav-item ${S.route==='billing'?'active':''}" onclick="go('billing')">💳 Billing</div>
                 </aside>
                 <div class="main-content">
-                    <div class="header"><h1>{{${{dashboard:'Dashboard','new-scan':'New Scan',scans:'My Scans',billing:'Billing',checkout:'Checkout'}[S.route]||'Dashboard'}}</h1></div>
+                    <div class="header"><h1>${{dashboard:'Dashboard','new-scan':'New Scan',scans:'My Scans',billing:'Billing',checkout:'Checkout'}[S.route]||'Dashboard'}</h1></div>
                     ${S.route==='dashboard'?rDashC():''}${S.route==='new-scan'?rNewScan():''}${S.route==='scans'?rScans():''}${S.route==='billing'?rBill():''}${S.route==='checkout'?rCheckout():''}
                 </div>
             </div>
