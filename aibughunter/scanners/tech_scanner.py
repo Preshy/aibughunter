@@ -64,37 +64,13 @@ class WordPressScanner(TechScanner):
         return self.findings
 
     async def _ensure_wpscan(self) -> bool:
-        """Install wpscan if not present. Returns True if available."""
+        """Check if wpscan is available. Returns True if usable."""
         if shutil.which("wpscan"):
             return True
         
-        console.print("[blue]  │  ⚠ wpscan not found — installing...[/blue]")
-        
-        try:
-            process = await asyncio.create_subprocess_shell(
-                "gem install wpscan",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=120,
-            )
-            
-            if process.returncode == 0:
-                console.print("[green]  │  ✓ wpscan installed[/green]")
-                return True
-            else:
-                err = stderr.decode("utf-8", errors="ignore").strip()
-                console.print(f"[yellow]  │  ⚠ wpscan install failed: {err[:100]}[/yellow]")
-                console.print("[yellow]  │  Falling back to manual WordPress checks[/yellow]")
-                return False
-        except asyncio.TimeoutError:
-            console.print("[yellow]  │  ⚠ wpscan install timed out[/yellow]")
-            return False
-        except Exception as e:
-            console.print(f"[yellow]  │  ⚠ wpscan install error: {e}[/yellow]")
-            return False
+        console.print("[yellow]  │  ⚠ wpscan not installed — run `gem install wpscan` to enable full scanning[/yellow]")
+        console.print("[yellow]  │  Running manual WordPress checks instead[/yellow]")
+        return False
 
     async def _run_wpscan(self):
         """Run wpscan against the target."""
