@@ -46,16 +46,17 @@ class TechScanner:
 
 
 class WordPressScanner(TechScanner):
-    """Scans WordPress sites using wpscan and custom checks."""
+    """Scans WordPress sites using wpscan (via Docker) and custom checks."""
 
     async def run(self) -> list[dict]:
         console.print("[blue]  ├─ WordPress detected[/blue]")
         
-        # Install wpscan if missing
-        has_wpscan = await self._ensure_wpscan()
-        
-        if has_wpscan:
-            await self._run_wpscan()
+        # Try wpscan via Docker sandbox
+        wpscan_out, wpscan_err, wpscan_rc = await self._run_wpscan()
+        if wpscan_rc == 0 and wpscan_out:
+            self._parse_wpscan_output(wpscan_out)
+        elif wpscan_rc == -1:
+            console.print("[yellow]  │  ⚠ wpscan timed out — using manual checks[/yellow]")
         
         # Always run manual checks
         await self._manual_wp_checks()
@@ -63,38 +64,10 @@ class WordPressScanner(TechScanner):
         console.print(f"[green]  └─ WordPress scan complete ({len(self.findings)} findings)[/green]")
         return self.findings
 
-    async def _ensure_wpscan(self) -> bool:
-        """Check if wpscan is available. Returns True if usable."""
-        if shutil.which("wpscan"):
-            return True
-        
-        console.print("[yellow]  │  ⚠ wpscan not installed — run `gem install wpscan` to enable full scanning[/yellow]")
-        console.print("[yellow]  │  Running manual WordPress checks instead[/yellow]")
-        return False
-
     async def _run_wpscan(self):
-        """Run wpscan against the target."""
-        try:
-            process = await asyncio.create_subprocess_exec(
-                "wpscan",
-                "--url", self.target,
-                "--enumerate", "vp,vt,tt,cb,dbe",
-                "--random-user-agent",
-                "--no-banner",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=300,
-            )
-            
-            output = stdout.decode("utf-8", errors="ignore")
-            self._parse_wpscan_output(output)
-        except asyncio.TimeoutError:
-            console.print("[yellow]  │  ⚠ wpscan timed out[/yellow]")
-        except Exception as e:
-            console.print(f"[yellow]  │  ⚠ wpscan error: {e}[/yellow]")
+        """Run wpscan in Docker sandbox."""
+        from aibughunter.sandbox import run_wpscan as docker_wpscan
+        return await docker_wpscan(self.target)
 
     def _parse_wpscan_output(self, output: str):
         """Parse wpscan output for findings."""
