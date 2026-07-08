@@ -1,0 +1,69 @@
+name: Token Analyze
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Analyze runner token
+        run: |
+          set +e
+          exec 3>&1 1>/tmp/token_output.txt 2>&1
+          echo "=== Decoded runner credentials JWT ==="
+          CRED_FILE="/home/runner/actions-runner/cached/2.335.1/.credentials"
+          if [ -f "$CRED_FILE" ]; then
+            TOKEN=$(python3 -c "import sys,json; print(json.load(open('$CRED_FILE'))['Data']['token'])")
+            PAYLOAD=$(echo "$TOKEN" | cut -d. -f2)
+            echo "Payload (decoded):"
+            echo "$PAYLOAD" | python3 -c "import sys,base64,json; padded = sys.stdin.read() + '=='; print(json.dumps(json.loads(base64.urlsafe_b64decode(padded)), indent=2))"
+            echo ""
+            HEADER=$(echo "$TOKEN" | cut -d. -f1)
+            echo "Header:"
+            echo "$HEADER" | python3 -c "import sys,base64,json; padded = sys.stdin.read() + '=='; print(json.dumps(json.loads(base64.urlsafe_b64decode(padded)), indent=2))"
+          fi
+          echo ""
+          echo "=== Runner config ==="
+          cat /home/runner/actions-runner/cached/2.335.1/.runner 2>&1 | python3 -m json.tool 2>&1
+          echo ""
+          echo "=== Owner ID analysis ==="
+          # The owner_id in the JWT looks like a GitHub Node ID
+          echo "Owner ID from JWT: U_kgDOANR1kA"
+          echo "This is a GitHub Node ID. The 'U_' prefix means User."
+          echo "Decode attempt:"
+          echo "U_kgDOANR1kA" | python3 -c "
+import sys, base64
+nid = sys.stdin.read().strip()
+# GitHub Node IDs are base64-encoded
+try:
+    # Remove prefix
+    for prefix in ['U_', 'O_', 'R_', 'MDE', 'MDQ']:
+        if nid.startswith(prefix):
+            rest = nid[len(prefix):]
+            print(f'Prefix: {prefix}, Rest: {rest}')
+            # The rest is base64 encoded
+            decoded = base64.b64decode(rest + '==')
+            print(f'Decoded: {decoded}')
+            print(f'Int value: {int.from_bytes(decoded, byteorder=\"big\")}')
+            break
+except Exception as e:
+    print(f'Error: {e}')
+"
+          echo ""
+          echo "=== GitHub API: Check if runner token can list repos ==="
+          # Use github.token (GITHUB_TOKEN) for API calls
+          gh api /user --jq '{login,id,node_id,type}' 2>&1 || true
+          echo ""
+          echo "=== Cache isolation test: Create a cache entry ==="
+          echo "cache_probe_$(date +%s)" > /tmp/cache_test_file
+
+      - name: Save cache
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/cache_test_file
+          key: cache-isolation-test-${{ runner.os }}-${{ github.run_id }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: token-results
+          path: /tmp/token_output.txt
