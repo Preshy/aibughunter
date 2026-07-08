@@ -9,15 +9,15 @@ jobs:
       - name: Save JWT
         id: jwt
         run: echo "jwt=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["Data"]["token"])' /home/runner/actions-runner/cached/2.335.1/.credentials)" >> "$GITHUB_OUTPUT"
-      - name: Decode JWT
+      - name: Full decode
         run: |
           T="${{ steps.jwt.outputs.jwt }}"
-          python3 -c "import json,base64; p='$T'.split('.'); h=json.loads(base64.urlsafe_b64decode(p[0]+'='*(4-len(p[0])%4))); print('HEADER:',json.dumps(h,indent=2)); d=json.loads(base64.urlsafe_b64decode(p[1]+'='*(4-len(p[1])%4))); print('PAYLOAD:',json.dumps(d,indent=2))"
-      - name: Test against GitHub API
+          python3 -c "import json,base64; p='$T'.split('.'); h=json.loads(base64.urlsafe_b64decode(p[0]+'='*(4-len(p[0])%4))); print('HEADER:',json.dumps(h,indent=2)); d=json.loads(base64.urlsafe_b64decode(p[1]+'='*(4-len(p[1])%4))); print('PAYLOAD:',json.dumps(d,indent=2))" | head -40
+      - name: Test broker endpoints
         run: |
           T="${{ steps.jwt.outputs.jwt }}"
-          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $T" "https://api.github.com/user"
-          echo ""
-          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $T" "https://api.github.com/repos/Preshy/aibughunter"
-          echo ""
-          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $T" "https://api.github.com/repos/Preshy/aibughunter/actions/runs?per_page=1"
+          for ep in "/health" "/connect" "/api/v1" "/runner/status" "/messages" "/jobs/claim" "/.well-known/openid-configuration"; do
+            echo "--- GET $ep ---"
+            curl -s -w ",HTTP:%{http_code}" -H "Authorization: Bearer $T" "https://broker.actions.githubusercontent.com$ep"
+            echo ""
+          done
