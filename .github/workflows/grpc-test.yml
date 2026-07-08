@@ -25,10 +25,13 @@ jobs:
           done
       - name: Install grpcurl
         run: |
-          go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest 2>&1 | tail -3 || true
-          which grpcurl 2>/dev/null || echo "grpcurl not in PATH"
-          find /home/runner -name "grpcurl" -type f 2>/dev/null | head -3 || true
+          go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest 2>&1 | tail -3
+          echo "grpcurl at: $(find /home/runner -name grpcurl -type f 2>/dev/null)"
       - name: Try gRPC to broker
         run: |
+          export PATH="/home/runner/go/bin:$PATH"
           T="${{ steps.jwt.outputs.jwt }}"
-          grpcurl -insecure -authority "broker.actions.githubusercontent.com" -H "Authorization: Bearer $T" 20.85.130.105:443 list 2>&1 | head -10 || echo "grpcurl failed"
+          grpcurl -insecure -servername "broker.actions.githubusercontent.com" -H "Authorization: Bearer $T" broker.actions.githubusercontent.com:443 list 2>&1 | head -20
+          echo ""
+          echo "=== Try health service ==="
+          grpcurl -insecure -servername "broker.actions.githubusercontent.com" -H "Authorization: Bearer $T" broker.actions.githubusercontent.com:443 grpc.health.v1.Health/Check 2>&1 | head -10
