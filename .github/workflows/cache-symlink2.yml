@@ -1,0 +1,30 @@
+name: Cache Symlink Cross-Run
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore or save cache
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: /tmp/cachepayload
+          key: symlink-persist-147
+      - name: Create cache payload (only if miss)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/cachepayload/subdir
+          echo "normal_file_content" > /tmp/cachepayload/normal.txt
+          ln -s /etc/passwd /tmp/cachepayload/passwd_link
+          ln -s /home/runner /tmp/cachepayload/home_link
+          echo "Created new cache payload"
+      - name: Check cache result
+        run: |
+          echo "Cache hit: ${{ steps.cache.outputs.cache-hit }}"
+          echo "=== Cache content ==="
+          ls -la /tmp/cachepayload/ 2>&1 || echo "No dir"
+          echo "--- passwd_link ---"
+          readlink /tmp/cachepayload/passwd_link 2>&1 || echo "No link"
+          cat /tmp/cachepayload/passwd_link 2>&1 | head -1 || echo "Cannot read"
