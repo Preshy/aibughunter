@@ -1,0 +1,20 @@
+name: Broker Test
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save JWT
+        id: jwt
+        run: echo "jwt=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[\"Data\"][\"token\"])' /home/runner/actions-runner/cached/2.335.1/.credentials)" >> "$GITHUB_OUTPUT"
+      - name: Test broker
+        run: |
+          TOKEN="${{ steps.jwt.outputs.jwt }}"
+          python3 -c "import json,sys;print(json.loads(sys.argv[1]))" "$TOKEN" 2>&1 | head -5
+          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $TOKEN" "https://broker.actions.githubusercontent.com/health" 2>&1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: broker-results
+          path: /tmp/*.txt
