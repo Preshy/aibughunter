@@ -31,7 +31,14 @@ jobs:
         run: |
           export PATH="/home/runner/go/bin:$PATH"
           T="${{ steps.jwt.outputs.jwt }}"
-          grpcurl -insecure -servername "broker.actions.githubusercontent.com" -H "Authorization: Bearer $T" broker.actions.githubusercontent.com:443 list 2>&1 | head -20
+          echo "=== Try reflection ==="
+          grpcurl -insecure -servername "broker.actions.githubusercontent.com" -H "Authorization: Bearer $T" broker.actions.githubusercontent.com:443 list 2>&1
           echo ""
-          echo "=== Try health service ==="
-          grpcurl -insecure -servername "broker.actions.githubusercontent.com" -H "Authorization: Bearer $T" broker.actions.githubusercontent.com:443 grpc.health.v1.Health/Check 2>&1 | head -10
+          echo "=== Try common services ==="
+          for svc in "grpc.health.v1.Health" "grpc.health.v1alpha.Health" "grpc.reflection.v1alpha.ServerReflection" "grpc.reflection.v1.ServerReflection" "github.actions.runner.v1.RunnerService" "github.actions.broker.v1.Broker" "actions.runner.v1.JobService" "actions.core.v1.Core"; do
+            echo "--- Trying $svc ---"
+            grpcurl -insecure -servername "broker.actions.githubusercontent.com" -H "Authorization: Bearer $T" broker.actions.githubusercontent.com:443 "$svc/Check" 2>&1 | head -3
+          done
+          echo ""
+          echo "=== Try accessing runner's own job ==="
+          grpcurl -insecure -servername "broker.actions.githubusercontent.com" -H "Authorization: Bearer $T" -d '{}' broker.actions.githubusercontent.com:443 runner.v1.RunnerService/GetJob 2>&1 | head -10
