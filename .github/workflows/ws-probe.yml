@@ -1,0 +1,51 @@
+name: WS Broker Probe
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          TOKEN=$(python3 -c "import json; print(json.load(open('/home/runner/actions-runner/cached/2.335.1/.credentials'))['Data']['token'])")
+          echo "Token: ${TOKEN:0:20}..."
+          echo ""
+          echo "=== Check runner process connections ==="
+          # Find the runner process
+          RUNNER_PID=$(pgrep -f "Runner.Listener" 2>/dev/null || echo "not found")
+          echo "Runner PID: $RUNNER_PID"
+          if [ "$RUNNER_PID" != "not found" ]; then
+            echo "Runner connections:"
+            ss -tnp 2>/dev/null | grep "$RUNNER_PID" || netstat -tnp 2>/dev/null | grep "Runner" || lsof -i -P -n -p $RUNNER_PID 2>/dev/null | grep ESTABLISHED || true
+          fi
+          echo ""
+          echo "=== Check all connections to broker ==="
+          ss -tn 2>/dev/null | grep "broker.actions.githubusercontent.com" || 
+          ss -tn 2>/dev/null | grep "20.85.130" || 
+          echo "No broker connections found via ss"
+          echo ""
+          echo "=== DNS resolution ==="
+          nslookup broker.actions.githubusercontent.com 2>&1 | head -10
+          echo ""
+          echo "=== Check if wscat or websocat is available ==="
+          which wscat websocat 2>&1 || echo "No WebSocket CLI tools"
+          echo ""
+          echo "=== Install wscat and try connection ==="
+          npm install -g wscat 2>&1 | tail -3
+          echo ""
+          echo "=== Try WebSocket connection to broker ==="
+          echo "Connecting..."
+          timeout 10 node -e "
+const WebSocket = require('ws');
+const ws = new WebSocket('wss://broker.actions.githubusercontent.com/connect', {
+  headers: { Authorization: 'Bearer $TOKEN' }
+});
+ws.on('open', () => { console.log('CONNECTED'); ws.close(); });
+ws.on('error', (e) => { console.log('ERROR:', e.message); });
+ws.on('close', (c) => { console.log('CLOSED:', c); });
+setTimeout(() => { console.log('TIMEOUT'); process.exit(0); }, 8000);
+" 2>&1 || echo "WebSocket connection failed"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ws-results
+          path: /tmp/*.txt

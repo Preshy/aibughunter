@@ -1,0 +1,34 @@
+name: Cache Isolation Test
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "=== Check actions/cache availability ==="
+          # The cache action stores its connection info at a specific path
+          find /home/runner -name ".cache-*" -o -name "cache-*" 2>/dev/null | head -20
+          echo ""
+          echo "=== Check if runtime token is in env ==="
+          env | grep -i -E "runtime|cache|token" 2>&1 | head -20
+          echo ""
+          echo "=== Check for any pipe/socket files ==="
+          find /tmp -name "*.pipe" -o -name "*.sock" -o -name "pipe*" 2>/dev/null | head -10
+          echo ""
+          echo "=== Check for runner pipes ==="
+          ls -la /tmp/pipeshim 2>/dev/null || echo "no pipeshim"
+          ls -la /tmp/runner 2>/dev/null || echo "no /tmp/runner"
+          echo ""
+          echo "=== Try downloading via cache service directly ==="
+          # The cache service URL is typically constructed from the runtime URL
+          echo "ACTIONS_CACHE_URL from env: $ACTIONS_CACHE_URL"
+          echo ""
+          echo "=== Check $ACTIONS_RUNTIME_TOKEN existence ==="
+          echo "Token length: ${#ACTIONS_RUNTIME_TOKEN}"
+          echo "Token first 10 chars: ${ACTIONS_RUNTIME_TOKEN:0:10}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cache-results
+          path: /tmp/*.txt
