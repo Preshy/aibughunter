@@ -1,0 +1,41 @@
+name: Deep Probe 2
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explore runner internals
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          exec 3>&1 1>/tmp/deep2_output.txt 2>&1
+          echo "=== Runner cached structure ==="
+          find /home/runner/actions-runner -type f -name "*.json" -o -name "*.config" -o -name ".credentials*" -o -name ".runner" 2>/dev/null | head -20
+          echo "=== Runner cached dirs ==="
+          ls -la /home/runner/actions-runner/cached/ 2>&1
+          echo "=== Listener dir ==="
+          ls -la /home/runner/actions-runner/cached/2.335.1/ 2>&1
+          echo "=== Runner config files ==="
+          find /home/runner -name ".runner" -o -name ".credentials" 2>/dev/null | head -5
+          echo "=== Home dir ==="
+          ls -la /home/runner/ 2>&1
+          echo "=== Work dir ==="
+          ls -la /home/runner/work/ 2>&1
+          echo "=== Debug: full runner tree ==="
+          find /home/runner/actions-runner -maxdepth 3 -type f 2>/dev/null | head -30
+          echo "=== All _.sh scripts in _temp ==="
+          for f in /home/runner/work/_temp/*.sh; do
+            echo "=== $f ==="
+            head -3 "$f" 2>&1
+          done
+          echo "=== Runtime API test ==="
+          # Try to find the runtime URL from the runner's args
+          gh api /repos/Preshy/aibughunter/actions/runs/${{ github.run_id }} --jq '{status,run_number,display_title}' 2>&1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deep2-results
+          path: /tmp/deep2_output.txt
