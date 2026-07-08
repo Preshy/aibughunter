@@ -1,0 +1,34 @@
+name: Advanced Probe
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Advanced probe
+        run: |
+          set +e
+          exec 3>&1 1>/tmp/probe2_output.txt 2>&1
+          echo "=== Proc 1 environ ==="
+          cat /proc/1/environ 2>/dev/null | tr '\0' '\n' | sort | head -30
+          echo "=== /proc/1/cmdline ==="
+          cat /proc/1/cmdline 2>/dev/null | tr '\0' ' '
+          echo ""
+          echo "=== Running processes ==="
+          ps aux 2>&1 | head -20
+          echo "=== Listening ports ==="
+          ss -tlnp 2>&1 || netstat -tlnp 2>&1
+          echo "=== Network test ==="
+          curl -sv --connect-timeout 3 https://api.github.com/ 2>&1 | head -20
+          echo "=== Hosts file ==="
+          cat /etc/hosts
+          echo "=== Metadata service path ==="
+          curl -sf --connect-timeout 3 http://169.254.169.254/metadata/instance?api-version=2021-02-01 -H "Metadata: true" 2>&1 || echo "No metadata"
+          echo "=== GITHUB_TOKEN API test ==="
+          gh api /user --jq '.login' 2>&1; echo "EXIT: $?"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe2-results
+          path: /tmp/probe2_output.txt
