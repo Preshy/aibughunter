@@ -1,0 +1,58 @@
+name: WS Connect Test
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          pip3 install websockets 2>&1 | tail -3
+          JWT_FILE="/home/runner/actions-runner/cached/2.335.1/.credentials"
+          TOKEN=$(python3 -c "import json; print(json.load(open('$JWT_FILE'))['Data']['token'])")
+          python3 << 'PYEOF'
+import asyncio, websockets, json, base64, ssl, subprocess, os
+
+# Get token from shell
+result = subprocess.run(['python3', '-c', 'import json; print(json.load(open("/home/runner/actions-runner/cached/2.335.1/.credentials"))["Data"]["token"])'], capture_output=True, text=True)
+TOKEN = result.stdout.strip()
+
+async def test():
+    uri = 'wss://broker.actions.githubusercontent.com/connect'
+    # Decode the JWT
+    parts = TOKEN.split('.')
+    pld = parts[1] + '=' * (4 - len(parts[1]) % 4)
+    payload = json.loads(base64.urlsafe_b64decode(pld))
+    print('JWT claims:', json.dumps(payload, indent=2))
+    
+    print('Connecting to broker...')
+    try:
+        async with websockets.connect(uri, extra_headers={'Authorization': f'Bearer {TOKEN}'}, ssl=True) as ws:
+            print('Connected!')
+            try:
+                msg = await asyncio.wait_for(ws.recv(), timeout=5)
+                print('Received:', msg)
+            except asyncio.TimeoutError:
+                print('No message received in 5s')
+    except Exception as e:
+        print(f'WebSocket error: {type(e).__name__}: {e}')
+        import http.client
+        conn = http.client.HTTPSConnection('broker.actions.githubusercontent.com', 443)
+        conn.request('GET', '/connect', headers={
+            'Authorization': f'Bearer {TOKEN}',
+            'Upgrade': 'websocket',
+            'Connection': 'Upgrade'
+        })
+        resp = conn.getresponse()
+        print(f'HTTP/WS upgrade response: {resp.status} {resp.reason}')
+        print('Headers:', dict(resp.getheaders()))
+        data = resp.read(500)
+        print('Body:', data[:200])
+
+asyncio.run(test())
+PYEOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ws-broker-results
+          path: /tmp/*.txt
