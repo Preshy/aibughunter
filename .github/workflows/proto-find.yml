@@ -1,0 +1,24 @@
+name: Proto Find
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "=== Run protoc with --descriptor_set_out to extract service descriptors ==="
+          which protoc 2>/dev/null && protoc --version || echo "protoc not found"
+          echo ""
+          echo "=== Look for proto files in runner dir ==="
+          find /home/runner/actions-runner -name "*.proto" 2>/dev/null | head -20
+          echo ""
+          echo "=== Look for _grpc or protobuf DLLs ==="
+          find /home/runner/actions-runner -name "*grpc*" -o -name "*Grpc*" -o -name "*protobuf*" -o -name "*Proto*" 2>/dev/null | head -20
+          echo ""
+          echo "=== Check if we can download runner source ==="
+          git clone --depth 1 https://github.com/actions/runner.git /tmp/runner-src 2>&1 | tail -5
+          find /tmp/runner-src -name "*.proto" 2>/dev/null | head -20
+          echo ""
+          echo "=== Check runner's own assemblies for gRPC ==="
+          find /home/runner/actions-runner -name "*.dll" -exec strings {} \; 2>/dev/null | grep -E "Broker|RunnerService|grpc" | sort -u | head -20
