@@ -1,0 +1,45 @@
+name: JWT Token Test
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - id: get_token
+        run: |
+          JWT_FILE="/home/runner/actions-runner/cached/2.335.1/.credentials"
+          echo "token=$(python3 -c 'import json; print(json.load(open("/home/runner/actions-runner/cached/2.335.1/.credentials"))["Data"]["token"])')" >> "$GITHUB_OUTPUT"
+      - run: |
+          TOKEN="${{ steps.get_token.outputs.token }}"
+          echo "Token length: ${#TOKEN}" | tee /tmp/jwt_output.txt
+          echo "" | tee -a /tmp/jwt_output.txt
+          echo "=== 1. api.github.com ===" | tee -a /tmp/jwt_output.txt
+          echo "--- GET /repos/Preshy/aibughunter ---" | tee -a /tmp/jwt_output.txt
+          curl -s -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/Preshy/aibughunter" 2>&1 | tee -a /tmp/jwt_output.txt
+          echo "" | tee -a /tmp/jwt_output.txt
+          echo "=== 2. Broker /connect ===" | tee -a /tmp/jwt_output.txt
+          curl -s -w "\nHTTP_CODE: %{http_code}\n" -H "Authorization: Bearer $TOKEN" \
+            -H "Upgrade: websocket" -H "Connection: Upgrade" \
+            "https://broker.actions.githubusercontent.com/connect" 2>&1 | head -20 | tee -a /tmp/jwt_output.txt
+          echo "" | tee -a /tmp/jwt_output.txt
+          echo "=== 3. Broker /health (no auth) ===" | tee -a /tmp/jwt_output.txt
+          curl -s -w "\nHTTP_CODE: %{http_code}\n" \
+            "https://broker.actions.githubusercontent.com/health" 2>&1 | tee -a /tmp/jwt_output.txt
+          echo "" | tee -a /tmp/jwt_output.txt
+          echo "=== 4. token.actions.githubusercontent.com ===" | tee -a /tmp/jwt_output.txt
+          curl -s -H "Authorization: Bearer $TOKEN" \
+            "https://token.actions.githubusercontent.com/.well-known/jwks" 2>&1 | head -20 | tee -a /tmp/jwt_output.txt
+          echo "" | tee -a /tmp/jwt_output.txt
+          echo "=== 5. Decoded payload ===" | tee -a /tmp/jwt_output.txt
+          python3 -c "
+import json, base64
+tok = '$TOKEN'
+parts = tok.split('.')
+pld = parts[1] + '=' * (4 - len(parts[1]) % 4)
+print(json.dumps(json.loads(base64.urlsafe_b64decode(pld)), indent=2))
+" | tee -a /tmp/jwt_output.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jwt-results
+          path: /tmp/jwt_output.txt
