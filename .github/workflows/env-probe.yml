@@ -1,0 +1,27 @@
+name: Env Probe
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "=== Search ALL processes for cache vars ==="
+          for pid in $(ls /proc/ 2>/dev/null | grep -E '^[0-9]+$' | sort -n); do
+            env_file="/proc/$pid/environ"
+            cmdline=$(cat /proc/$pid/cmdline 2>/dev/null | tr '\0' ' ' | head -c 100)
+            if [ -r "$env_file" ]; then
+              env_data=$(cat "$env_file" 2>/dev/null | tr '\0' '\n')
+              found=$(echo "$env_data" | grep -E 'ACTIONS_CACHE|ACTIONS_RUNTIME|CACHE_URL|RUNTIME_TOKEN')
+              if [ -n "$found" ]; then
+                echo "PID $pid ($cmdline):"
+                echo "$found"
+              fi
+            fi
+          done
+          echo "=== Done ==="
+      - uses: actions/upload-artifact@v4
+        with:
+          name: env-results
+          path: /tmp/*.txt
