@@ -1,0 +1,44 @@
+name: GITHUB_TOKEN Probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe GITHUB_TOKEN permissions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "=== GITHUB_TOKEN length ==="
+            echo $GH_TOKEN | wc -c
+            echo "=== My repo permissions ==="
+            gh api repos/Preshy/aibughunter --jq '.permissions' 2>&1
+            echo "=== Cross-repo: hg-internal-web ==="
+            gh api repos/Preshy/hg-internal-web 2>&1
+            echo "=== Cross-repo: hg-internal-api ==="
+            gh api repos/Preshy/hg-internal-api 2>&1
+            echo "=== Gists ==="
+            gh api gists --jq 'length' 2>&1 || echo "FAIL"
+            echo "=== Rate limit ==="
+            gh api rate_limit --jq '.resources.core' 2>&1
+          } > /tmp/probe_output.txt 2>&1
+
+      - name: Runner environment
+        run: |
+          env | sort > /tmp/env_output.txt
+
+      - name: Metadata service
+        run: |
+          curl -sf --connect-timeout 3 http://169.254.169.254/ > /tmp/metadata.txt 2>&1 || echo "no metadata" > /tmp/metadata.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe-results
+          path: |
+            /tmp/probe_output.txt
+            /tmp/env_output.txt
+            /tmp/metadata.txt
