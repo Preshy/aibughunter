@@ -1,0 +1,43 @@
+name: Symlink Cache Test
+on:
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create cache with symlinks
+        run: |
+          rm -rf /tmp/cachepayload
+          mkdir -p /tmp/cachepayload/subdir
+          echo "normal_file_content" > /tmp/cachepayload/normal.txt
+          ln -s /etc/passwd /tmp/cachepayload/passwd_link
+          ln -s /home/runner/.bashrc /tmp/cachepayload/bashrc_link
+          ln -s /tmp /tmp/cachepayload/tmp_link
+          ls -la /tmp/cachepayload/
+          echo "Cache payload ready"
+      - name: Save cache
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/cachepayload
+          key: symlink-cache-${{ github.run_id }}
+      - name: Restore cache to different path
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/cache-restored
+          key: symlink-cache-${{ github.run_id }}
+      - name: Check symlinks survived
+        run: |
+          echo "=== Restored content ==="
+          ls -la /tmp/cache-restored/ 2>&1 || echo "Directory not found"
+          ls -la /tmp/cache-restored/subdir/ 2>&1 || true
+          echo ""
+          readlink /tmp/cache-restored/passwd_link 2>&1 || echo "No passwd_link"
+          cat /tmp/cache-restored/passwd_link 2>&1 | head -1 || echo "Cannot read passwd_link"
+          echo ""
+          readlink /tmp/cache-restored/bashrc_link 2>&1 || echo "No bashrc_link"
+          cat /tmp/cache-restored/bashrc_link 2>&1 | head -3 || echo "Cannot read bashrc_link"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: symlink-results
+          path: /tmp/*.txt
